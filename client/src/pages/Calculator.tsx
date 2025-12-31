@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MOCK_COST_BREAKDOWN, MOCK_LOCAL_STATS } from "@/lib/constants";
-import { DollarSign, MapPin, Loader2, Sparkles, Check, Upload, FileText, Camera } from "lucide-react";
+import { DollarSign, MapPin, Loader2, Sparkles, Check, Upload, FileText, Camera, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 export default function Calculator() {
@@ -21,9 +21,22 @@ export default function Calculator() {
   const [manualRent, setManualRent] = useState(2000);
   const [manualParking, setManualParking] = useState(100);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleAnalyze = () => {
+    if (file && !file.name.toLowerCase().includes("rent") && !file.name.toLowerCase().includes("listing") && !file.name.toLowerCase().includes("house")) {
+      setAnalyzing(true);
+      setError(null);
+      setTimeout(() => {
+        setAnalyzing(false);
+        setError("AI Analysis Failed: The uploaded document does not appear to be a rental listing. Please upload a valid listing PDF or photo.");
+      }, 1500);
+      return;
+    }
+
     setAnalyzing(true);
     setResult(null);
+    setError(null);
     // Simulate AI delay
     setTimeout(() => {
       const mockResult = { ...MOCK_COST_BREAKDOWN };
@@ -176,6 +189,20 @@ export default function Calculator() {
       </Tabs>
 
       <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6"
+          >
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-4 rounded-xl flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              {error}
+            </div>
+          </motion.div>
+        )}
+
         {result && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
