@@ -18,8 +18,8 @@ export default function Vault() {
       <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 mb-8 flex items-start gap-3">
         <ShieldCheck className="w-6 h-6 text-accent shrink-0 mt-1" />
         <div>
-          <h3 className="font-semibold text-accent-foreground text-sm">Bank-Grade Encryption</h3>
-          <p className="text-xs text-muted-foreground mt-1">Your documents are encrypted locally before upload. Only you hold the keys.</p>
+          <h3 className="font-semibold text-accent-foreground text-sm">Encrypted Asset Locker</h3>
+          <p className="text-xs text-muted-foreground mt-1">Secure storage for Gold loans, Property docs, and Lease agreements. Locally encrypted.</p>
         </div>
       </div>
 

@@ -45,9 +45,10 @@ export default function Home() {
           <div className="grid gap-3">
             <FeatureCard 
               title="Lease Scanner" 
-              description="AI-powered analysis of legal terms and hidden clauses."
+              description="AI-powered analysis of Indian legal terms and renter rights."
               icon={ScanSearch}
               color="text-blue-600"
+              onClick={() => setLocation("/lease-scanner")}
             />
             <FeatureCard 
               title="Document Vault" 
@@ -65,6 +66,11 @@ export default function Home() {
             />
           </div>
         </section>
+
+        {/* Mock AdMob Banner */}
+        <div className="mt-8 p-4 bg-muted/30 rounded-xl border border-dashed flex items-center justify-center text-[10px] text-muted-foreground uppercase tracking-widest min-h-[50px]">
+          Sponsored Content
+        </div>
       </motion.div>
     </div>
   );

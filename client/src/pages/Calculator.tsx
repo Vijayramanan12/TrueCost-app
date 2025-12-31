@@ -18,8 +18,8 @@ export default function Calculator() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Manual entry states
-  const [manualRent, setManualRent] = useState(2000);
-  const [manualParking, setManualParking] = useState(100);
+  const [manualRent, setManualRent] = useState(25000);
+  const [manualParking, setManualParking] = useState(2000);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export default function Calculator() {
       setError(null);
       setTimeout(() => {
         setAnalyzing(false);
-        setError("AI Analysis Failed: The uploaded document does not appear to be a rental listing. Please upload a valid listing PDF or photo.");
+        setError("AI Analysis Failed: The uploaded document does not appear to be an Indian rental listing. Please upload a valid listing PDF or photo.");
       }, 1500);
       return;
     }
@@ -40,8 +40,8 @@ export default function Calculator() {
     // Simulate AI delay
     setTimeout(() => {
       const mockResult = { ...MOCK_COST_BREAKDOWN };
-      if (manualRent !== 2000) mockResult.baseRent = manualRent;
-      if (manualParking !== 100) mockResult.parking = manualParking;
+      if (manualRent !== 25000) mockResult.baseRent = manualRent;
+      if (manualParking !== 2000) mockResult.parking = manualParking;
       
       setResult(mockResult);
       setAnalyzing(false);
@@ -158,26 +158,26 @@ export default function Calculator() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <Label>Base Monthly Rent</Label>
-                <span className="font-bold text-primary">${manualRent}</span>
+                <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
               </div>
               <Slider 
                 value={[manualRent]} 
                 onValueChange={([v]) => setManualRent(v)} 
-                max={10000} 
-                step={50}
+                max={200000} 
+                step={1000}
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between">
                 <Label>Parking Fee</Label>
-                <span className="font-bold text-primary">${manualParking}</span>
+                <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
               </div>
               <Slider 
                 value={[manualParking]} 
                 onValueChange={([v]) => setManualParking(v)} 
-                max={500} 
-                step={10}
+                max={10000} 
+                step={500}
               />
             </div>
 
@@ -216,11 +216,11 @@ export default function Calculator() {
               <CardContent className="p-6 relative z-10 text-center">
                 <p className="text-primary-foreground/70 text-sm font-medium uppercase tracking-wider mb-1">True Monthly Cost</p>
                 <div className="text-5xl font-heading font-bold mb-2 tracking-tighter">
-                  ${totalMonthly.toLocaleString()}
+                  ₹{totalMonthly.toLocaleString('en-IN')}
                 </div>
                 <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-xs backdrop-blur-md">
                   <span className="opacity-70 mr-1">Base Rent:</span> 
-                  <span className="font-bold">${result.baseRent.toLocaleString()}</span>
+                  <span className="font-bold">₹{result.baseRent.toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
             </Card>
@@ -261,8 +261,13 @@ export default function Calculator() {
                 <StatCard label="Safety Score" value={`${MOCK_LOCAL_STATS.safetyScore}/10`} />
                 <StatCard label="Walk Score" value={MOCK_LOCAL_STATS.walkScore} />
                 <StatCard label="Commute" value={MOCK_LOCAL_STATS.commuteTime} />
-                <StatCard label="Power Grid" value={MOCK_LOCAL_STATS.powerReliability} />
+                <StatCard label="Grid Stability" value={MOCK_LOCAL_STATS.powerReliability} />
               </div>
+            </div>
+
+            {/* Mock AdMob Banner */}
+            <div className="mt-4 p-4 bg-muted/30 rounded-xl border border-dashed flex items-center justify-center text-[10px] text-muted-foreground uppercase tracking-widest min-h-[50px]">
+              Sponsored Content
             </div>
           </motion.div>
         )}
@@ -275,7 +280,7 @@ function Row({ label, amount, highlight, small, bold }: { label: string, amount:
   return (
     <div className={`flex justify-between items-center ${small ? 'text-xs text-muted-foreground' : 'text-sm'} ${highlight ? 'text-accent-foreground font-medium' : ''} ${bold ? 'font-bold text-base' : ''}`}>
       <span>{label}</span>
-      <span>${amount.toLocaleString()}</span>
+      <span>₹{amount.toLocaleString('en-IN')}</span>
     </div>
   );
 }

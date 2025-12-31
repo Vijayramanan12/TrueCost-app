@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Calculator from "@/pages/Calculator";
 import Vault from "@/pages/Vault";
 import Timeline from "@/pages/Timeline";
+import LeaseScanner from "@/pages/LeaseScanner";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/calculator" component={Calculator} />
       <Route path="/vault" component={Vault} />
       <Route path="/timeline" component={Timeline} />
+      <Route path="/lease-scanner" component={LeaseScanner} />
       <Route component={NotFound} />
     </Switch>
   );

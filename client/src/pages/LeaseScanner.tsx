@@ -1,0 +1,68 @@
+import { motion } from "framer-motion";
+import { ScanSearch, ShieldAlert, BookOpen, Scale, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export default function LeaseScanner() {
+  const stateRights = [
+    { state: "Maharashtra", law: "Rent Control Act 1999", key: "Standard rent fixation" },
+    { state: "Delhi", law: "Delhi Rent Act 1995", key: "Eviction protection" },
+    { state: "Karnataka", law: "Rent Control Act 2001", key: "Security deposit limits" },
+  ];
+
+  return (
+    <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
+      <header className="mb-8">
+        <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-2">
+          Lease Scanner <ScanSearch className="w-6 h-6 text-blue-500" />
+        </h1>
+        <p className="text-muted-foreground">AI analysis of Indian rental agreements.</p>
+      </header>
+
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8 text-center">
+        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ScanSearch className="w-8 h-8 text-blue-500" />
+        </div>
+        <h2 className="font-heading font-semibold text-lg mb-2">Scan Your Agreement</h2>
+        <p className="text-sm text-muted-foreground mb-4">Upload your lease to check for unfair clauses and verify state-specific rights.</p>
+        <Button className="w-full">Upload Document</Button>
+      </div>
+
+      <div className="space-y-6">
+        <section>
+          <h3 className="text-lg font-heading font-semibold mb-4 flex items-center gap-2">
+            <Scale className="w-5 h-5 text-primary" /> State-Specific Rights
+          </h3>
+          <div className="space-y-3">
+            {stateRights.map((item, i) => (
+              <motion.div
+                key={item.state}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-card border p-4 rounded-xl flex items-center justify-between group cursor-pointer"
+              >
+                <div>
+                  <div className="font-medium text-sm">{item.state}</div>
+                  <div className="text-xs text-muted-foreground">{item.law}</div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4">
+          <h3 className="text-sm font-semibold text-amber-600 flex items-center gap-2 mb-2">
+            <ShieldAlert className="w-4 h-4" /> Common Red Flags (India)
+          </h3>
+          <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-4">
+            <li>Excessive security deposit (should be 2-3 months in most cities).</li>
+            <li>Lack of clear maintenance responsibility clauses.</li>
+            <li>Vague notice period for mid-term evictions.</li>
+            <li>Inconsistent utility billing methods.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  );
+}

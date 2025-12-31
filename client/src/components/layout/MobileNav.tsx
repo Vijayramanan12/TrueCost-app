@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { NAV_ITEMS } from "@/lib/constants";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { User } from "lucide-react";
 
 export function MobileNav() {
   const [location] = useLocation();
@@ -31,6 +32,10 @@ export function MobileNav() {
             </Link>
           );
         })}
+        <button className="flex flex-col items-center justify-center p-2 rounded-xl text-muted-foreground hover:text-primary/70">
+          <User className="w-6 h-6" />
+          <span className="text-[10px] font-medium mt-1">Profile</span>
+        </button>
       </nav>
     </div>
   );

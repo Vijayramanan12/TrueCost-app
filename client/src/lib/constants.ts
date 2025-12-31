@@ -8,20 +8,20 @@ export const NAV_ITEMS = [
 ];
 
 export const MOCK_COST_BREAKDOWN = {
-  baseRent: 2400,
-  parking: 150,
-  petFee: 50,
+  baseRent: 45000,
+  parking: 2000,
+  petFee: 500,
   utilities: {
-    water: 45,
-    electricity: 80,
-    internet: 60,
-    trash: 25,
+    water: 400,
+    electricity: 3500,
+    internet: 800,
+    trash: 200,
   },
   oneTime: {
-    deposit: 2400,
-    appFee: 50,
-    adminFee: 150,
-    moveIn: 200,
+    deposit: 90000,
+    appFee: 500,
+    adminFee: 2000,
+    moveIn: 5000,
   },
 };
 
@@ -29,7 +29,7 @@ export const MOCK_LOCAL_STATS = {
   safetyScore: 8.5,
   commuteTime: "24 min",
   waterReliability: "High",
-  powerReliability: "Medium",
+  powerReliability: "Stable (98%)",
   walkScore: 92,
 };
 
@@ -62,6 +62,7 @@ export const MOCK_TIMELINE_EVENTS = [
 
 export const MOCK_DOCUMENTS = [
   { id: 1, name: "Lease Agreement 2024.pdf", type: "legal", date: "Jan 28, 2024", size: "2.4 MB" },
-  { id: 2, name: "Renter's Insurance", type: "insurance", date: "Jan 29, 2024", size: "1.1 MB" },
-  { id: 3, name: "Move-in Photos", type: "media", date: "Feb 01, 2024", size: "45 MB" },
+  { id: 2, name: "Gold Loan Document.pdf", type: "asset", date: "Feb 10, 2024", size: "1.5 MB" },
+  { id: 3, name: "Property Tax Receipt.pdf", type: "tax", date: "Mar 05, 2024", size: "0.8 MB" },
+  { id: 4, name: "Society NOC.pdf", type: "legal", date: "Jan 29, 2024", size: "1.1 MB" },
 ];
