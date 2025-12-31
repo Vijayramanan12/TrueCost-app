@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,21 +7,38 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MOCK_COST_BREAKDOWN, MOCK_LOCAL_STATS } from "@/lib/constants";
-import { DollarSign, MapPin, Loader2, Sparkles, Check } from "lucide-react";
+import { DollarSign, MapPin, Loader2, Sparkles, Check, Upload, FileText, Camera } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 export default function Calculator() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<typeof MOCK_COST_BREAKDOWN | null>(null);
   const [url, setUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Manual entry states
+  const [manualRent, setManualRent] = useState(2000);
+  const [manualParking, setManualParking] = useState(100);
 
   const handleAnalyze = () => {
     setAnalyzing(true);
+    setResult(null);
     // Simulate AI delay
     setTimeout(() => {
-      setResult(MOCK_COST_BREAKDOWN);
+      const mockResult = { ...MOCK_COST_BREAKDOWN };
+      if (manualRent !== 2000) mockResult.baseRent = manualRent;
+      if (manualParking !== 100) mockResult.parking = manualParking;
+      
+      setResult(mockResult);
       setAnalyzing(false);
     }, 2000);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
   };
 
   const totalMonthly = result 
@@ -39,11 +56,63 @@ export default function Calculator() {
         <p className="text-muted-foreground">Reveal the hidden costs of renting.</p>
       </header>
 
-      <Tabs defaultValue="url" className="mb-8">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="url">Paste URL</TabsTrigger>
-          <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+      <Tabs defaultValue="upload" className="mb-8">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="upload">Upload</TabsTrigger>
+          <TabsTrigger value="url">URL</TabsTrigger>
+          <TabsTrigger value="manual">Manual</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="upload" className="mt-4 space-y-4">
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-muted-foreground/20 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors"
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              className="hidden" 
+              accept="image/*,.pdf"
+            />
+            {file ? (
+              <>
+                <FileText className="w-10 h-10 text-primary" />
+                <div className="text-center">
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <Camera className="w-8 h-8 text-muted-foreground" />
+                  <Upload className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium">Upload Listing Photo or PDF</p>
+                  <p className="text-xs text-muted-foreground">Tap to browse files</p>
+                </div>
+              </>
+            )}
+          </div>
+          <Button 
+            className="w-full h-12 text-lg font-medium" 
+            onClick={handleAnalyze} 
+            disabled={analyzing || !file}
+          >
+            {analyzing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Scanning Document...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-5 w-5" /> Extract & Calculate
+              </>
+            )}
+          </Button>
+        </TabsContent>
+
         <TabsContent value="url" className="mt-4 space-y-4">
           <div className="relative">
             <Input 
@@ -70,9 +139,38 @@ export default function Calculator() {
             )}
           </Button>
         </TabsContent>
-        <TabsContent value="manual">
-          <div className="p-8 text-center text-muted-foreground bg-muted/30 rounded-xl border border-dashed">
-            Manual entry form would go here.
+
+        <TabsContent value="manual" className="mt-4 space-y-6">
+          <div className="space-y-4 bg-muted/20 p-4 rounded-2xl border">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label>Base Monthly Rent</Label>
+                <span className="font-bold text-primary">${manualRent}</span>
+              </div>
+              <Slider 
+                value={[manualRent]} 
+                onValueChange={([v]) => setManualRent(v)} 
+                max={10000} 
+                step={50}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label>Parking Fee</Label>
+                <span className="font-bold text-primary">${manualParking}</span>
+              </div>
+              <Slider 
+                value={[manualParking]} 
+                onValueChange={([v]) => setManualParking(v)} 
+                max={500} 
+                step={10}
+              />
+            </div>
+
+            <Button className="w-full" onClick={handleAnalyze} disabled={analyzing}>
+              Calculate with Manual Data
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
