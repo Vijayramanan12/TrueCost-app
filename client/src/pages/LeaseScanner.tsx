@@ -62,6 +62,11 @@ export default function LeaseScanner() {
             <li>Inconsistent utility billing methods.</li>
           </ul>
         </section>
+
+        {/* Mock AdMob Banner */}
+        <div className="mt-4 p-4 bg-muted/30 rounded-xl border border-dashed flex items-center justify-center text-[10px] text-muted-foreground uppercase tracking-widest min-h-[50px]">
+          Sponsored Content
+        </div>
       </div>
     </div>
   );
