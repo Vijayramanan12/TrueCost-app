@@ -18,8 +18,15 @@ export default function Calculator() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Manual entry states
-  const [manualRent, setManualRent] = useState(25000);
+  const [manualRent, setManualRent] = useState(45000);
   const [manualParking, setManualParking] = useState(2000);
+  const [manualPetRent, setManualPetRent] = useState(500);
+  const [manualWater, setManualWater] = useState(400);
+  const [manualElectricity, setManualElectricity] = useState(3500);
+  const [manualInternet, setManualInternet] = useState(800);
+  const [manualTrash, setManualTrash] = useState(200);
+  const [manualDepositMultiplier, setManualDepositMultiplier] = useState(2);
+  const [manualAdminFee, setManualAdminFee] = useState(2500);
 
   const [showAd, setShowAd] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +51,24 @@ export default function Calculator() {
       setShowAd(true);
       setAnalyzing(false);
       
-      const mockResult = { ...MOCK_COST_BREAKDOWN };
-      if (manualRent !== 25000) mockResult.baseRent = manualRent;
-      if (manualParking !== 2000) mockResult.parking = manualParking;
+      const mockResult = {
+        baseRent: manualRent,
+        parking: manualParking,
+        petFee: manualPetRent,
+        utilities: {
+          water: manualWater,
+          electricity: manualElectricity,
+          internet: manualInternet,
+          trash: manualTrash
+        },
+        oneTime: {
+          deposit: manualRent * manualDepositMultiplier,
+          appFee: 0,
+          adminFee: manualAdminFee,
+          moveIn: 0
+        }
+      };
+      
       setResult(mockResult);
     }, 2000);
   };
@@ -158,34 +180,103 @@ export default function Calculator() {
 
         <TabsContent value="manual" className="mt-4 space-y-6">
           <div className="space-y-4 bg-muted/20 p-4 rounded-2xl border">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label>Base Monthly Rent</Label>
-                <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Base Monthly Rent</Label>
+                  <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
+                </div>
+                <Slider 
+                  value={[manualRent]} 
+                  onValueChange={([v]) => setManualRent(v)} 
+                  max={200000} 
+                  step={1000}
+                />
               </div>
-              <Slider 
-                value={[manualRent]} 
-                onValueChange={([v]) => setManualRent(v)} 
-                max={200000} 
-                step={1000}
-              />
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Parking Fee</Label>
+                  <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
+                </div>
+                <Slider 
+                  value={[manualParking]} 
+                  onValueChange={([v]) => setManualParking(v)} 
+                  max={10000} 
+                  step={500}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Pet Rent</Label>
+                  <span className="font-bold text-primary">₹{manualPetRent.toLocaleString('en-IN')}</span>
+                </div>
+                <Slider 
+                  value={[manualPetRent]} 
+                  onValueChange={([v]) => setManualPetRent(v)} 
+                  max={5000} 
+                  step={100}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Security Deposit (Months)</Label>
+                  <span className="font-bold text-primary">{manualDepositMultiplier}x Rent</span>
+                </div>
+                <Slider 
+                  value={[manualDepositMultiplier]} 
+                  onValueChange={([v]) => setManualDepositMultiplier(v)} 
+                  max={10} 
+                  step={1}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label>Parking Fee</Label>
-                <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
+            <div className="pt-4 border-t space-y-4">
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Estimated Utilities</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <Label>Electricity</Label>
+                    <span>₹{manualElectricity}</span>
+                  </div>
+                  <Slider value={[manualElectricity]} onValueChange={([v]) => setManualElectricity(v)} max={10000} step={100} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <Label>Water/Sewer</Label>
+                    <span>₹{manualWater}</span>
+                  </div>
+                  <Slider value={[manualWater]} onValueChange={([v]) => setManualWater(v)} max={2000} step={50} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <Label>Internet</Label>
+                    <span>₹{manualInternet}</span>
+                  </div>
+                  <Slider value={[manualInternet]} onValueChange={([v]) => setManualInternet(v)} max={5000} step={100} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <Label>Trash/Maintenance</Label>
+                    <span>₹{manualTrash}</span>
+                  </div>
+                  <Slider value={[manualTrash]} onValueChange={([v]) => setManualTrash(v)} max={2000} step={50} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <Label>Admin Fees</Label>
+                    <span>₹{manualAdminFee}</span>
+                  </div>
+                  <Slider value={[manualAdminFee]} onValueChange={([v]) => setManualAdminFee(v)} max={10000} step={500} />
+                </div>
               </div>
-              <Slider 
-                value={[manualParking]} 
-                onValueChange={([v]) => setManualParking(v)} 
-                max={10000} 
-                step={500}
-              />
             </div>
 
-            <Button className="w-full" onClick={handleAnalyze} disabled={analyzing}>
-              Calculate with Manual Data
+            <Button className="w-full h-12 text-lg font-bold" onClick={handleAnalyze} disabled={analyzing}>
+              Calculate True Cost
             </Button>
           </div>
         </TabsContent>
