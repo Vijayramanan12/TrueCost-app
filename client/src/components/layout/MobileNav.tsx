@@ -32,10 +32,26 @@ export function MobileNav() {
             </Link>
           );
         })}
-        <button className="flex flex-col items-center justify-center p-2 rounded-xl text-muted-foreground hover:text-primary/70">
-          <User className="w-6 h-6" />
-          <span className="text-[10px] font-medium mt-1">Profile</span>
-        </button>
+        <Link href="/profile">
+          <a 
+            className={cn(
+              "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200",
+              location === "/profile" ? "text-primary" : "text-muted-foreground hover:text-primary/70"
+            )}
+            data-testid="link-profile"
+          >
+            <div className="relative">
+              <User className={cn("w-6 h-6", location === "/profile" && "stroke-[2.5px]")} />
+              {location === "/profile" && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute -bottom-2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"
+                />
+              )}
+            </div>
+            <span className="text-[10px] font-medium mt-1">Profile</span>
+          </a>
+        </Link>
       </nav>
     </div>
   );

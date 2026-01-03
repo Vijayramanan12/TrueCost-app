@@ -9,6 +9,7 @@ import Calculator from "@/pages/Calculator";
 import Vault from "@/pages/Vault";
 import Timeline from "@/pages/Timeline";
 import LeaseScanner from "@/pages/LeaseScanner";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/vault" component={Vault} />
       <Route path="/timeline" component={Timeline} />
       <Route path="/lease-scanner" component={LeaseScanner} />
+      <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
   );

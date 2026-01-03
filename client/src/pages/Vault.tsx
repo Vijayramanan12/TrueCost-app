@@ -1,9 +1,36 @@
-import { motion } from "framer-motion";
-import { Lock, FileText, Camera, Upload, ShieldCheck, ChevronRight } from "lucide-react";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock, FileText, Camera, Upload, ShieldCheck, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MOCK_DOCUMENTS } from "@/lib/constants";
+import { toast } from "sonner";
 
 export default function Vault() {
+  const [documents, setDocuments] = useState(MOCK_DOCUMENTS);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIsUploading(true);
+      
+      // Simulate encryption and upload
+      setTimeout(() => {
+        const newDoc = {
+          id: documents.length + 1,
+          name: file.name,
+          type: file.type.includes('image') ? 'media' : 'legal',
+          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        };
+        setDocuments([newDoc, ...documents]);
+        setIsUploading(false);
+        toast.success("Document encrypted and saved to vault");
+      }, 1500);
+    }
+  };
+
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
        <header className="mb-8 flex items-center justify-between">
@@ -23,12 +50,30 @@ export default function Vault() {
         </div>
       </div>
 
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleUpload} 
+        className="hidden" 
+      />
+
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50">
-          <Upload className="w-8 h-8 text-muted-foreground" />
-          <span className="text-xs font-medium">Upload Doc</span>
+        <Button 
+          variant="outline" 
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50"
+          data-testid="button-upload-doc"
+        >
+          {isUploading ? <Loader2 className="w-8 h-8 animate-spin text-accent" /> : <Upload className="w-8 h-8 text-muted-foreground" />}
+          <span className="text-xs font-medium">{isUploading ? "Encrypting..." : "Upload Doc"}</span>
         </Button>
-        <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50">
+        <Button 
+          variant="outline" 
+          onClick={() => fileInputRef.current?.click()}
+          className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50"
+          data-testid="button-add-photo"
+        >
           <Camera className="w-8 h-8 text-muted-foreground" />
           <span className="text-xs font-medium">Add Photo</span>
         </Button>
@@ -37,7 +82,7 @@ export default function Vault() {
       <div className="space-y-4">
         <h3 className="text-lg font-heading font-semibold">Stored Documents</h3>
         <div className="space-y-3">
-          {MOCK_DOCUMENTS.map((doc, i) => (
+          {documents.map((doc, i) => (
             <motion.div
               key={doc.id}
               initial={{ opacity: 0, x: -10 }}
