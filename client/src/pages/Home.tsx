@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { FeatureCard } from "@/components/ui/FeatureCard";
-import { ScanSearch, ShieldCheck, History, ArrowRight } from "lucide-react";
+import { ScanSearch, ShieldCheck, History, ArrowRight, Calculator as CalculatorIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
@@ -49,6 +49,13 @@ export default function Home() {
               icon={ScanSearch}
               color="text-blue-600"
               onClick={() => setLocation("/lease-scanner")}
+            />
+            <FeatureCard 
+              title="Loan Calculator" 
+              description="EMI estimates for Gold and Property asset loans."
+              icon={CalculatorIcon}
+              color="text-amber-600"
+              onClick={() => setLocation("/loan-calculator")}
             />
             <FeatureCard 
               title="Document Vault" 
