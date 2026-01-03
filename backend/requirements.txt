@@ -1,0 +1,10 @@
+flask
+flask-cors
+flask-sqlalchemy
+flask-jwt-extended
+flask-bcrypt
+google-generativeai
+python-dotenv
+pydantic
+pytest
+flask-executor

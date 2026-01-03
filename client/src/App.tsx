@@ -13,7 +13,25 @@ import Profile from "@/pages/Profile";
 import LoanCalculator from "@/pages/LoanCalculator";
 import NotFound from "@/pages/not-found";
 
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import Login from "@/pages/Login";
+
 function Router() {
+  const { token, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  if (!token) {
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route>
+          {() => { window.location.href = "/login"; return null; }}
+        </Route>
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -31,13 +49,17 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter>
-          <Router />
-          <MobileNav />
-          <Toaster />
-        </WouterRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter>
+            <div className="min-h-screen bg-background pb-16">
+              <Router />
+              <MobileNav />
+            </div>
+            <Toaster />
+          </WouterRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
