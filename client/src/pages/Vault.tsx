@@ -1,39 +1,56 @@
-import { useState, useRef } from "react";
+import React, { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, FileText, Camera, Upload, ShieldCheck, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MOCK_DOCUMENTS } from "@/lib/constants";
 import { toast } from "sonner";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Document, InsertDocument } from "@shared/schema";
 
 export default function Vault() {
-  const [documents, setDocuments] = useState(MOCK_DOCUMENTS);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: documents = [], isLoading } = useQuery<Document[]>({
+    queryKey: ["/api/documents"],
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (doc: InsertDocument) => {
+      const res = await apiRequest("POST", "/api/documents", doc);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      toast.success("Document encrypted and saved to vault");
+    },
+    onError: () => {
+      toast.error("Failed to save document");
+    }
+  });
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setIsUploading(true);
-      
-      // Simulate encryption and upload
-      setTimeout(() => {
-        const newDoc = {
-          id: documents.length + 1,
-          name: file.name,
-          type: file.type.includes('image') ? 'media' : 'legal',
-          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        };
-        setDocuments([newDoc, ...documents]);
-        setIsUploading(false);
-        toast.success("Document encrypted and saved to vault");
-      }, 1500);
+
+      // Simulate file processing/parsing -> Extract metadata
+      const newDoc: InsertDocument = {
+        name: file.name,
+        type: file.type.includes('image') ? 'media' : 'legal',
+        date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        url: URL.createObjectURL(file) // For now, locally created URL - in real app would be server URL
+      };
+
+      mutation.mutate(newDoc);
     }
   };
 
+  const isUploading = mutation.isPending;
+
+
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
-       <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-2">
             Secure Vault <Lock className="w-6 h-6 text-accent" />
@@ -50,16 +67,16 @@ export default function Vault() {
         </div>
       </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleUpload} 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleUpload}
+        className="hidden"
       />
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           disabled={isUploading}
           onClick={() => fileInputRef.current?.click()}
           className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50"
@@ -68,8 +85,8 @@ export default function Vault() {
           {isUploading ? <Loader2 className="w-8 h-8 animate-spin text-accent" /> : <Upload className="w-8 h-8 text-muted-foreground" />}
           <span className="text-xs font-medium">{isUploading ? "Encrypting..." : "Upload Doc"}</span>
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => fileInputRef.current?.click()}
           className="h-24 flex flex-col items-center justify-center gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-muted/50"
           data-testid="button-add-photo"

@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,23 @@ export default function Calculator() {
   const [showAd, setShowAd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+
+  const mutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/analyze", data);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setShowAd(true);
+      setAnalyzing(false);
+      setResult(data);
+    },
+    onError: () => {
+      setAnalyzing(false);
+      setError("Analysis Failed. Please try again.");
+    }
+  });
+
   const handleAnalyze = () => {
     if (file && !file.name.toLowerCase().includes("rent") && !file.name.toLowerCase().includes("listing") && !file.name.toLowerCase().includes("house")) {
       setAnalyzing(true);
@@ -45,32 +64,28 @@ export default function Calculator() {
     setAnalyzing(true);
     setResult(null);
     setError(null);
-    
-    // Simulate AI delay + Ad
-    setTimeout(() => {
-      setShowAd(true);
-      setAnalyzing(false);
-      
-      const mockResult = {
-        baseRent: manualRent,
-        parking: manualParking,
-        petFee: manualPetRent,
-        utilities: {
-          water: manualWater,
-          electricity: manualElectricity,
-          internet: manualInternet,
-          trash: manualTrash
-        },
-        oneTime: {
-          deposit: manualRent * manualDepositMultiplier,
-          appFee: 0,
-          adminFee: manualAdminFee,
-          moveIn: 0
-        }
-      };
-      
-      setResult(mockResult);
-    }, 2000);
+
+    // Construct payload - if file is present, we might upload it (ignored in this MVP backend)
+    // We send manual values as 'simulation' of file content or just purely manual mode
+    const payload = {
+      baseRent: manualRent,
+      parking: manualParking,
+      petFee: manualPetRent,
+      utilities: {
+        water: manualWater,
+        electricity: manualElectricity,
+        internet: manualInternet,
+        trash: manualTrash
+      },
+      oneTime: {
+        deposit: manualRent * manualDepositMultiplier,
+        appFee: 0,
+        adminFee: manualAdminFee,
+        moveIn: 0
+      }
+    };
+
+    mutation.mutate(payload);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +94,7 @@ export default function Calculator() {
     }
   };
 
-  const totalMonthly = result 
+  const totalMonthly = result
     ? result.baseRent + result.parking + result.petFee + Object.values(result.utilities).reduce((a, b) => a + b, 0)
     : 0;
 
@@ -102,15 +117,15 @@ export default function Calculator() {
         </TabsList>
 
         <TabsContent value="upload" className="mt-4 space-y-4">
-          <div 
+          <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-muted-foreground/20 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors"
           >
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
               accept="image/*,.pdf"
             />
             {file ? (
@@ -134,9 +149,9 @@ export default function Calculator() {
               </>
             )}
           </div>
-          <Button 
-            className="w-full h-12 text-lg font-medium" 
-            onClick={handleAnalyze} 
+          <Button
+            className="w-full h-12 text-lg font-medium"
+            onClick={handleAnalyze}
             disabled={analyzing || !file}
           >
             {analyzing ? (
@@ -153,17 +168,17 @@ export default function Calculator() {
 
         <TabsContent value="url" className="mt-4 space-y-4">
           <div className="relative">
-            <Input 
-              placeholder="https://zillow.com/homes/..." 
+            <Input
+              placeholder="https://zillow.com/homes/..."
               className="pl-10 h-12 bg-muted/30 border-muted-foreground/20"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           </div>
-          <Button 
-            className="w-full h-12 text-lg font-medium" 
-            onClick={handleAnalyze} 
+          <Button
+            className="w-full h-12 text-lg font-medium"
+            onClick={handleAnalyze}
             disabled={analyzing || !url}
           >
             {analyzing ? (
@@ -186,10 +201,10 @@ export default function Calculator() {
                   <Label>Base Monthly Rent</Label>
                   <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
                 </div>
-                <Slider 
-                  value={[manualRent]} 
-                  onValueChange={([v]) => setManualRent(v)} 
-                  max={200000} 
+                <Slider
+                  value={[manualRent]}
+                  onValueChange={([v]) => setManualRent(v)}
+                  max={200000}
                   step={1000}
                 />
               </div>
@@ -199,10 +214,10 @@ export default function Calculator() {
                   <Label>Parking Fee</Label>
                   <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
                 </div>
-                <Slider 
-                  value={[manualParking]} 
-                  onValueChange={([v]) => setManualParking(v)} 
-                  max={10000} 
+                <Slider
+                  value={[manualParking]}
+                  onValueChange={([v]) => setManualParking(v)}
+                  max={10000}
                   step={500}
                 />
               </div>
@@ -212,10 +227,10 @@ export default function Calculator() {
                   <Label>Pet Rent</Label>
                   <span className="font-bold text-primary">₹{manualPetRent.toLocaleString('en-IN')}</span>
                 </div>
-                <Slider 
-                  value={[manualPetRent]} 
-                  onValueChange={([v]) => setManualPetRent(v)} 
-                  max={5000} 
+                <Slider
+                  value={[manualPetRent]}
+                  onValueChange={([v]) => setManualPetRent(v)}
+                  max={5000}
                   step={100}
                 />
               </div>
@@ -225,10 +240,10 @@ export default function Calculator() {
                   <Label>Security Deposit (Months)</Label>
                   <span className="font-bold text-primary">{manualDepositMultiplier}x Rent</span>
                 </div>
-                <Slider 
-                  value={[manualDepositMultiplier]} 
-                  onValueChange={([v]) => setManualDepositMultiplier(v)} 
-                  max={10} 
+                <Slider
+                  value={[manualDepositMultiplier]}
+                  onValueChange={([v]) => setManualDepositMultiplier(v)}
+                  max={10}
                   step={1}
                 />
               </div>
@@ -291,20 +306,20 @@ export default function Calculator() {
             className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
           >
             <div className="absolute top-6 right-6">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowAd(false)}
                 className="text-muted-foreground hover:text-foreground"
               >
                 Skip Ad in 2s...
               </Button>
             </div>
-            
+
             <div className="max-w-xs w-full space-y-6">
               <div className="aspect-square bg-muted rounded-3xl overflow-hidden shadow-2xl relative group">
-                <img 
-                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800" 
+                <img
+                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800"
                   alt="Advertisement"
                   className="w-full h-full object-cover"
                 />
@@ -314,19 +329,19 @@ export default function Calculator() {
                   <p className="text-sm font-bold text-black leading-tight">Home Insurance from ₹499/mo</p>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h2 className="text-2xl font-heading font-bold">Protect Your New Home</h2>
                 <p className="text-muted-foreground text-sm">Get instant coverage for your rental deposit and belongings.</p>
               </div>
-              
-              <Button 
+
+              <Button
                 className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
                 onClick={() => setShowAd(false)}
               >
                 Learn More
               </Button>
-              
+
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Advertisement</p>
             </div>
           </motion.div>
@@ -362,7 +377,7 @@ export default function Calculator() {
                   ₹{totalMonthly.toLocaleString('en-IN')}
                 </div>
                 <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-xs backdrop-blur-md">
-                  <span className="opacity-70 mr-1">Base Rent:</span> 
+                  <span className="opacity-70 mr-1">Base Rent:</span>
                   <span className="font-bold">₹{result.baseRent.toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
