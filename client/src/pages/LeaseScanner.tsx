@@ -1,8 +1,20 @@
-import { motion } from "framer-motion";
-import { ScanSearch, ShieldAlert, BookOpen, Scale, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ScanSearch, ShieldAlert, BookOpen, Scale, ChevronRight, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LeaseScanner() {
+  const [analyzing, setAnalyzing] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+
+  const handleUpload = () => {
+    setAnalyzing(true);
+    setTimeout(() => {
+      setAnalyzing(false);
+      setShowAd(true);
+    }, 1500);
+  };
+
   const stateRights = [
     { state: "Maharashtra", law: "Rent Control Act 1999", key: "Standard rent fixation" },
     { state: "Delhi", law: "Delhi Rent Act 1995", key: "Eviction protection" },
@@ -24,8 +36,60 @@ export default function LeaseScanner() {
         </div>
         <h2 className="font-heading font-semibold text-lg mb-2">Scan Your Agreement</h2>
         <p className="text-sm text-muted-foreground mb-4">Upload your lease to check for unfair clauses and verify state-specific rights.</p>
-        <Button className="w-full">Upload Document</Button>
+        <Button className="w-full" onClick={handleUpload} disabled={analyzing}>
+          {analyzing ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing...
+            </>
+          ) : "Upload Document"}
+        </Button>
       </div>
+
+      <AnimatePresence>
+        {showAd && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+          >
+            <div className="absolute top-6 right-6">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAd(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Skip
+              </Button>
+            </div>
+            
+            <div className="max-w-xs w-full space-y-6">
+              <div className="aspect-video bg-muted rounded-2xl overflow-hidden shadow-2xl relative">
+                <img 
+                  src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800" 
+                  alt="Advertisement"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/10" />
+                <div className="absolute top-2 left-2 bg-black/50 text-white text-[8px] px-2 py-0.5 rounded uppercase font-bold">Ad</div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-xl font-heading font-bold">Moving Made Easy</h2>
+                <p className="text-muted-foreground text-sm">Professional packers and movers starting at ₹2,999.</p>
+              </div>
+              
+              <Button 
+                className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                onClick={() => setShowAd(false)}
+              >
+                Get Free Quote
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="space-y-6">
         <section>

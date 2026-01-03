@@ -108,7 +108,7 @@ export default function Profile() {
         </Button>
 
         <p className="text-[10px] text-center text-muted-foreground">
-          TrueCost v1.0.4 • Made for India
+          TrueCost v1.0.4 • Made by ADER Digital Corporation
         </p>
       </div>
     </div>

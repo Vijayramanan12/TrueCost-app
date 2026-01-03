@@ -21,6 +21,7 @@ export default function Calculator() {
   const [manualRent, setManualRent] = useState(25000);
   const [manualParking, setManualParking] = useState(2000);
 
+  const [showAd, setShowAd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = () => {
@@ -37,14 +38,16 @@ export default function Calculator() {
     setAnalyzing(true);
     setResult(null);
     setError(null);
-    // Simulate AI delay
+    
+    // Simulate AI delay + Ad
     setTimeout(() => {
+      setShowAd(true);
+      setAnalyzing(false);
+      
       const mockResult = { ...MOCK_COST_BREAKDOWN };
       if (manualRent !== 25000) mockResult.baseRent = manualRent;
       if (manualParking !== 2000) mockResult.parking = manualParking;
-      
       setResult(mockResult);
-      setAnalyzing(false);
     }, 2000);
   };
 
@@ -189,6 +192,55 @@ export default function Calculator() {
       </Tabs>
 
       <AnimatePresence>
+        {showAd && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+          >
+            <div className="absolute top-6 right-6">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAd(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Skip Ad in 2s...
+              </Button>
+            </div>
+            
+            <div className="max-w-xs w-full space-y-6">
+              <div className="aspect-square bg-muted rounded-3xl overflow-hidden shadow-2xl relative group">
+                <img 
+                  src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800" 
+                  alt="Advertisement"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur p-3 rounded-xl text-left">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Sponsored</p>
+                  <p className="text-sm font-bold text-black leading-tight">Home Insurance from ₹499/mo</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-heading font-bold">Protect Your New Home</h2>
+                <p className="text-muted-foreground text-sm">Get instant coverage for your rental deposit and belongings.</p>
+              </div>
+              
+              <Button 
+                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                onClick={() => setShowAd(false)}
+              >
+                Learn More
+              </Button>
+              
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Advertisement</p>
+            </div>
+          </motion.div>
+        )}
+
         {error && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
