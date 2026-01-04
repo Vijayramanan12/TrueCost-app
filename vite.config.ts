@@ -43,9 +43,10 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
+    port: 9001,
     proxy: {
       "/api": {
-        target: "http://0.0.0.0:5001",
+        target: "http://0.0.0.0:9002",
         changeOrigin: true,
       },
     },

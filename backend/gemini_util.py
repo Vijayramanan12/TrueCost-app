@@ -9,8 +9,13 @@ load_dotenv()
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    try:
+        genai.configure(api_key=api_key)
+        # Trying gemini-2.5-flash which may have separate quota limits
+        model = genai.GenerativeModel('gemini-2.5-flash')
+    except Exception as e:
+        print(f"⚠️ Error configuring Gemini: {e}")
+        model = None
 else:
     model = None
 
@@ -20,37 +25,61 @@ def analyze_rental_listing(listing_text):
     If no API key is provided, returns demo data.
     """
     if not model:
-        # Mock behavior for dev without key
-        return {
-            "baseRent": 45000,
-            "parking": 2000,
-            "petFee": 500,
-            "utilities": {"water": 400, "electricity": 3500, "internet": 800, "trash": 200},
-            "oneTime": {"deposit": 90000, "appFee": 0, "adminFee": 2500, "moveIn": 0}
-        }
+        print("⚠️ Gemini API key missing. AI features disabled.")
+        return None
 
     prompt = f"""
-    Analyze the following rental listing text and extract the cost details in JSON format.
-    Return ONLY a JSON object with these exact keys:
-    "baseRent" (number), "parking" (number), "petFee" (number), 
-    "utilities" (object with "water", "electricity", "internet", "trash" numbers),
-    "oneTime" (object with "deposit", "appFee", "adminFee", "moveIn" numbers).
-    
-    If a value is not found, use a reasonable default based on typical Indian urban rentals.
+    Analyze the following rental listing text and extract cost details into a JSON object.
+
+CONTEXT:
+- Location: Urban India
+- Standard: If a cost is mentioned as "included," set value to 0. 
+- Defaults: If a cost is NOT mentioned, use -1 (this allows the backend to flag it for user input rather than guessing).
+
+STRICT JSON SCHEMA:
+{{
+    "baseRent": number,
+    "maintenance": number,
+    "parking": number,
+    "petFee": number,
+    "utilities": {{
+        "water": number,
+        "electricity": "metered" | number,
+        "internet": number,
+        "trash": number
+    }},
+    "oneTime": {{
+        "deposit": number,
+        "appFee": number,
+        "adminFee": number,
+        "moveIn": number
+    }},
+    "metadata": {{
+        "isDepositRefundable": boolean,
+        "noticePeriodDays": number,
+        "lockInPeriodMonths": number
+    }},
+    "confidenceScore": 0.0-1.0
+}}
+
+INPUT TEXT:
+[PASTE LISTING HERE]
+Do not infer, estimate, or guess missing values. Only transform explicitly stated information according to the rules above.
+Return ONLY the JSON object. Do not include prose or explanations.
     
     Listing Text:
     {listing_text}
     """
     
-    response = model.generate_content(prompt)
-    
-    # Extract JSON from response
     try:
+        response = model.generate_content(prompt)
+        
+        # Extract JSON from response
         json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if json_match:
             return json.loads(json_match.group())
     except Exception as e:
-        print(f"Error parsing Gemini response: {e}")
+        print(f"⚠️ Error during Gemini analysis: {e}")
         
     return None
 
@@ -59,32 +88,67 @@ def scan_lease_agreement(lease_text):
     Analyzes a lease agreement for red flags and state rights.
     """
     if not model:
-        return {
-            "red_flags": ["Excessive security deposit", "Lack of maintenance clauses"],
-            "law_name": "Rent Control Act 1999",
-            "key_protection": "Standard rent fixation"
-        }
+        print("⚠️ Gemini API key missing. AI features disabled.")
+        return None
 
     prompt = f"""
-    Analyze this Indian rental agreement text for:
-    1. Legal 'red flags' or unfair clauses (at least 3).
-    2. The applicable state law (e.g., Maharashtra Rent Control Act).
-    3. The key legal protection this law provides the tenant.
-    
-    Return ONLY a JSON object with these keys:
-    "red_flags" (list of strings), "law_name" (string), "key_protection" (string).
+    Analyze the following Indian rental agreement text and extract legal insights into a structured JSON object.
+
+CONTEXT
+	•	Jurisdiction: India
+	•	The task is information extraction and legal insight identification, not legal advice.
+	•	Do not infer, guess, or invent clauses that are not present in the text.
+	•	Identify issues even if they are indirectly or euphemistically phrased (not exact keyword matches).
+
+CRITERIA FOR ANALYSIS
+	1.	Red Flags
+Identify and list clauses that may be unfair, abusive, or illegal under Indian tenancy laws, including but not limited to:
+
+	•	Arbitrary or unilateral eviction (e.g., "terminate at owner's discretion", "vacate on demand")
+	•	Rent increase clauses allowing:
+	•	More than 10% per year
+	•	Unilateral or undefined increases (e.g., "as per market conditions")
+	•	Security deposits that are:
+	•	Non-refundable
+	•	Disguised as "advance" or "adjustable" without clear refund terms
+	•	Unreasonable restrictions on guests, family members, or overnight stays
+
+	2.	Law Identification
+
+	•	Extract the property location from the text.
+	•	Map it to the most current applicable State Rent Control / Tenancy Act.
+	•	If only a city is mentioned, infer the state from the city.
+	•	If the location is insufficient to identify the state, set the law name accordingly.
+
+STRICT JSON SCHEMA
+{{
+"red_flags": [
+"Clause X: Description of why it is unfair or potentially illegal"
+],
+"law_name": "Full name of the applicable State Rent Act (most recent version)",
+"key_protection": "One concise sentence describing the most important tenant protection under this law"
+}}
+
+RULES
+	•	Do not add explanations, commentary, or suggestions.
+	•	Do not provide legal advice.
+	•	If no red flags are found, return an empty array for red_flags.
+	•	Return ONLY the JSON object.
+
+TEXT TO ANALYZE
+[PASTE AGREEMENT TEXT HERE]
     
     Lease Text:
     {lease_text}
     """
     
-    response = model.generate_content(prompt)
-    
     try:
+        response = model.generate_content(prompt)
+        
         json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if json_match:
             return json.loads(json_match.group())
     except Exception as e:
-        print(f"Error parsing Gemini response: {e}")
+        print(f"⚠️ Error during Gemini lease scan: {e}")
         
     return None

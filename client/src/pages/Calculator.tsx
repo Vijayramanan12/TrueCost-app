@@ -3,21 +3,24 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MOCK_COST_BREAKDOWN, MOCK_LOCAL_STATS } from "@/lib/constants";
-import { DollarSign, MapPin, Loader2, Sparkles, Check, Upload, FileText, Camera, AlertTriangle } from "lucide-react";
+import { DollarSign, MapPin, Loader2, Sparkles, Check, Upload, FileText, Camera, AlertTriangle, Type } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "@/lib/language-context";
 
 export default function Calculator() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<typeof MOCK_COST_BREAKDOWN | null>(null);
-  const [url, setUrl] = useState("");
+  const [listingText, setListingText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   // Manual entry states
   const [manualRent, setManualRent] = useState(45000);
@@ -44,9 +47,18 @@ export default function Calculator() {
       setAnalyzing(false);
       setResult(data);
     },
-    onError: () => {
+    onError: async (error: any) => {
       setAnalyzing(false);
-      setError("Analysis Failed. Please try again.");
+      try {
+        const errorData = await error.json();
+        if (errorData.error === "API_KEY_MISSING") {
+          setError("Gemini API Key is missing in the backend. Please add GEMINI_API_KEY to your .env file or use Manual entry.");
+        } else {
+          setError(errorData.message || "Analysis Failed. Please try again.");
+        }
+      } catch (e) {
+        setError("Analysis Failed. Please check your connection and try again.");
+      }
     }
   });
 
@@ -65,23 +77,13 @@ export default function Calculator() {
     setResult(null);
     setError(null);
 
-    // Construct payload - if file is present, we might upload it (ignored in this MVP backend)
-    // We send manual values as 'simulation' of file content or just purely manual mode
+    // Construct payload
     const payload = {
-      baseRent: manualRent,
-      parking: manualParking,
-      petFee: manualPetRent,
-      utilities: {
-        water: manualWater,
-        electricity: manualElectricity,
-        internet: manualInternet,
-        trash: manualTrash
-      },
+      listingText: listingText,
+      manualRent: manualRent,
       oneTime: {
         deposit: manualRent * manualDepositMultiplier,
-        appFee: 0,
         adminFee: manualAdminFee,
-        moveIn: 0
       }
     };
 
@@ -105,15 +107,15 @@ export default function Calculator() {
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
       <header className="mb-8">
-        <h1 className="text-3xl font-heading font-bold text-foreground">TrueCost Calculator</h1>
-        <p className="text-muted-foreground">Reveal the hidden costs of renting.</p>
+        <h1 className="text-3xl font-heading font-bold text-foreground">{t("calculatorTitle")}</h1>
+        <p className="text-muted-foreground">{t("calculatorSubtitle")}</p>
       </header>
 
       <Tabs defaultValue="upload" className="mb-8">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload">Upload</TabsTrigger>
-          <TabsTrigger value="url">URL</TabsTrigger>
-          <TabsTrigger value="manual">Manual</TabsTrigger>
+          <TabsTrigger value="upload">{t("upload")}</TabsTrigger>
+          <TabsTrigger value="paste">{t("pasteText")}</TabsTrigger>
+          <TabsTrigger value="manual">{t("manual")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="mt-4 space-y-4">
@@ -143,8 +145,8 @@ export default function Calculator() {
                   <Upload className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium">Upload Listing Photo or PDF</p>
-                  <p className="text-xs text-muted-foreground">Tap to browse files</p>
+                  <p className="text-sm font-medium">{t("uploadPlaceholderTitle")}</p>
+                  <p className="text-xs text-muted-foreground">{t("uploadPlaceholderDesc")}</p>
                 </div>
               </>
             )}
@@ -156,38 +158,38 @@ export default function Calculator() {
           >
             {analyzing ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Scanning Document...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t("scanningDoc")}
               </>
             ) : (
               <>
-                <Sparkles className="mr-2 h-5 w-5" /> Extract & Calculate
+                <Sparkles className="mr-2 h-5 w-5" /> {t("extractAndCalculate")}
               </>
             )}
           </Button>
         </TabsContent>
 
-        <TabsContent value="url" className="mt-4 space-y-4">
-          <div className="relative">
-            <Input
-              placeholder="https://zillow.com/homes/..."
-              className="pl-10 h-12 bg-muted/30 border-muted-foreground/20"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+        <TabsContent value="paste" className="mt-4 space-y-4">
+          <div className="relative group">
+            <Textarea
+              placeholder={t("pastePlaceholder")}
+              className="min-h-[160px] bg-muted/30 border-muted-foreground/20 rounded-2xl p-4 pt-10 focus:ring-primary transition-all group-hover:bg-muted/40"
+              value={listingText}
+              onChange={(e) => setListingText(e.target.value)}
             />
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <FileText className="absolute left-4 top-3 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
           <Button
             className="w-full h-12 text-lg font-medium"
             onClick={handleAnalyze}
-            disabled={analyzing || !url}
+            disabled={analyzing || !listingText}
           >
             {analyzing ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing Listing...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t("analyzingListing")}
               </>
             ) : (
               <>
-                <Sparkles className="mr-2 h-5 w-5" /> Calculate True Cost
+                <Sparkles className="mr-2 h-5 w-5" /> {t("calculateTrueCost")}
               </>
             )}
           </Button>
@@ -198,7 +200,7 @@ export default function Calculator() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Base Monthly Rent</Label>
+                  <Label>{t("baseMonthlyRent")}</Label>
                   <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
                 </div>
                 <Slider
@@ -211,7 +213,7 @@ export default function Calculator() {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Parking Fee</Label>
+                  <Label>{t("parkingFee")}</Label>
                   <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
                 </div>
                 <Slider
@@ -224,7 +226,7 @@ export default function Calculator() {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Pet Rent</Label>
+                  <Label>{t("petRent")}</Label>
                   <span className="font-bold text-primary">₹{manualPetRent.toLocaleString('en-IN')}</span>
                 </div>
                 <Slider
@@ -237,8 +239,8 @@ export default function Calculator() {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label>Security Deposit (Months)</Label>
-                  <span className="font-bold text-primary">{manualDepositMultiplier}x Rent</span>
+                  <Label>{t("securityDepositMonths")}</Label>
+                  <span className="font-bold text-primary">{manualDepositMultiplier}{t("rentMultiplier")}</span>
                 </div>
                 <Slider
                   value={[manualDepositMultiplier]}
@@ -250,39 +252,39 @@ export default function Calculator() {
             </div>
 
             <div className="pt-4 border-t space-y-4">
-              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Estimated Utilities</Label>
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t("estimatedUtilities")}</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <Label>Electricity</Label>
+                    <Label>{t("electricity")}</Label>
                     <span>₹{manualElectricity}</span>
                   </div>
                   <Slider value={[manualElectricity]} onValueChange={([v]) => setManualElectricity(v)} max={10000} step={100} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <Label>Water/Sewer</Label>
+                    <Label>{t("waterSewer")}</Label>
                     <span>₹{manualWater}</span>
                   </div>
                   <Slider value={[manualWater]} onValueChange={([v]) => setManualWater(v)} max={2000} step={50} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <Label>Internet</Label>
+                    <Label>{t("internet")}</Label>
                     <span>₹{manualInternet}</span>
                   </div>
                   <Slider value={[manualInternet]} onValueChange={([v]) => setManualInternet(v)} max={5000} step={100} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <Label>Trash/Maintenance</Label>
+                    <Label>{t("trashMaintenance")}</Label>
                     <span>₹{manualTrash}</span>
                   </div>
                   <Slider value={[manualTrash]} onValueChange={([v]) => setManualTrash(v)} max={2000} step={50} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
-                    <Label>Admin Fees</Label>
+                    <Label>{t("adminFees")}</Label>
                     <span>₹{manualAdminFee}</span>
                   </div>
                   <Slider value={[manualAdminFee]} onValueChange={([v]) => setManualAdminFee(v)} max={10000} step={500} />
@@ -291,7 +293,7 @@ export default function Calculator() {
             </div>
 
             <Button className="w-full h-12 text-lg font-bold" onClick={handleAnalyze} disabled={analyzing}>
-              Calculate True Cost
+              {t("calculateTrueCost")}
             </Button>
           </div>
         </TabsContent>
@@ -312,7 +314,7 @@ export default function Calculator() {
                 onClick={() => setShowAd(false)}
                 className="text-muted-foreground hover:text-foreground"
               >
-                Skip Ad in 2s...
+                {t("skipAd")}
               </Button>
             </div>
 
@@ -372,12 +374,12 @@ export default function Calculator() {
             <Card className="border-none shadow-lg bg-primary text-primary-foreground overflow-hidden relative">
               <div className="absolute top-0 right-0 w-40 h-40 bg-accent/20 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
               <CardContent className="p-6 relative z-10 text-center">
-                <p className="text-primary-foreground/70 text-sm font-medium uppercase tracking-wider mb-1">True Monthly Cost</p>
+                <p className="text-primary-foreground/70 text-sm font-medium uppercase tracking-wider mb-1">{t("trueMonthlyCost")}</p>
                 <div className="text-5xl font-heading font-bold mb-2 tracking-tighter">
                   ₹{totalMonthly.toLocaleString('en-IN')}
                 </div>
                 <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-xs backdrop-blur-md">
-                  <span className="opacity-70 mr-1">Base Rent:</span>
+                  <span className="opacity-70 mr-1">{t("baseMonthlyRent")}:</span>
                   <span className="font-bold">₹{result.baseRent.toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
@@ -385,47 +387,47 @@ export default function Calculator() {
 
             {/* Breakdown */}
             <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg">Monthly Breakdown</h3>
+              <h3 className="font-heading font-semibold text-lg">{t("monthlyBreakdown")}</h3>
               <div className="bg-card border rounded-xl p-4 space-y-3 shadow-sm">
-                <Row label="Base Rent" amount={result.baseRent} />
-                <Row label="Parking" amount={result.parking} />
-                <Row label="Pet Rent" amount={result.petFee} />
+                <Row label={t("baseMonthlyRent")} amount={result.baseRent} />
+                <Row label={t("parkingFee")} amount={result.parking} />
+                <Row label={t("petRent")} amount={result.petFee} />
                 <div className="h-px bg-border my-2" />
-                <Row label="Est. Utilities" amount={Object.values(result.utilities).reduce((a, b) => a + b, 0)} highlight />
+                <Row label={t("estimatedUtilities")} amount={Object.values(result.utilities).reduce((a, b) => a + b, 0)} highlight />
                 <div className="pl-4 space-y-2 mt-2 border-l-2 border-muted">
-                  <Row label="Water/Sewer" amount={result.utilities.water} small />
-                  <Row label="Electricity" amount={result.utilities.electricity} small />
-                  <Row label="Internet" amount={result.utilities.internet} small />
+                  <Row label={t("waterSewer")} amount={result.utilities.water} small />
+                  <Row label={t("electricity")} amount={result.utilities.electricity} small />
+                  <Row label={t("internet")} amount={result.utilities.internet} small />
                 </div>
               </div>
             </div>
 
             {/* Move-in Costs */}
             <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg">Move-in Requirements</h3>
+              <h3 className="font-heading font-semibold text-lg">{t("moveInRequirements")}</h3>
               <div className="bg-muted/30 border rounded-xl p-4 space-y-3">
-                <Row label="First Month" amount={result.baseRent} />
-                <Row label="Security Deposit" amount={result.oneTime.deposit} />
-                <Row label="Admin & App Fees" amount={result.oneTime.appFee + result.oneTime.adminFee} />
+                <Row label={t("firstMonth")} amount={result.baseRent} />
+                <Row label={t("securityDeposit")} amount={result.oneTime.deposit} />
+                <Row label={t("adminAppFees")} amount={result.oneTime.appFee + result.oneTime.adminFee} />
                 <div className="h-px bg-border my-2" />
-                <Row label="Total Move-in" amount={totalMoveIn} bold />
+                <Row label={t("totalMoveIn")} amount={totalMoveIn} bold />
               </div>
             </div>
 
             {/* Local Stats */}
             <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg">Location Insights</h3>
+              <h3 className="font-heading font-semibold text-lg">{t("locationInsights")}</h3>
               <div className="grid grid-cols-2 gap-3">
-                <StatCard label="Safety Score" value={`${MOCK_LOCAL_STATS.safetyScore}/10`} />
-                <StatCard label="Walk Score" value={MOCK_LOCAL_STATS.walkScore} />
-                <StatCard label="Commute" value={MOCK_LOCAL_STATS.commuteTime} />
-                <StatCard label="Grid Stability" value={MOCK_LOCAL_STATS.powerReliability} />
+                <StatCard label={t("safetyScore")} value={`${MOCK_LOCAL_STATS.safetyScore}/10`} />
+                <StatCard label={t("walkScore")} value={MOCK_LOCAL_STATS.walkScore} />
+                <StatCard label={t("commute")} value={MOCK_LOCAL_STATS.commuteTime} />
+                <StatCard label={t("gridStability")} value={MOCK_LOCAL_STATS.powerReliability} />
               </div>
             </div>
 
             {/* Mock AdMob Banner */}
             <div className="mt-4 p-4 bg-muted/30 rounded-xl border border-dashed flex items-center justify-center text-[10px] text-muted-foreground uppercase tracking-widest min-h-[50px]">
-              Sponsored Content
+              {t("sponsored")}
             </div>
           </motion.div>
         )}

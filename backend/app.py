@@ -189,6 +189,15 @@ def update_event(event_id):
         return jsonify(event)
     return jsonify({"message": "Event not found or unauthorized"}), 404
 
+@app.route('/api/events/<event_id>', methods=['DELETE'])
+@jwt_required()
+def delete_event(event_id):
+    user_id = get_jwt_identity()
+    success = storage.delete_event(user_id, event_id)
+    if success:
+        return jsonify({"message": "Event deleted"}), 200
+    return jsonify({"message": "Event not found or unauthorized"}), 404
+
 # ============= CALCULATOR API =============
 
 @app.route('/api/analyze', methods=['POST'])
@@ -197,29 +206,34 @@ def analyze():
     input_data = request.json or {}
     text_content = input_data.get("listingText", "")
     
+    # If text is provided, attempt AI analysis
     if text_content:
         result = analyze_rental_listing(text_content)
         if result:
             return jsonify(result)
+        # If AI is attempted but fails (e.g. key missing), return error
+        return jsonify({
+            "message": "AI Analysis failed. Please ensure the GEMINI_API_KEY is configured in the backend environment.",
+            "error": "API_KEY_MISSING"
+        }), 503
 
-    time.sleep(1)
-    defaults = {
-        "baseRent": 45000, "parking": 2000, "petFee": 500,
-        "utilities": {"water": 400, "electricity": 3500, "internet": 800, "trash": 200},
-        "oneTime": {"deposit": 90000, "appFee": 0, "adminFee": 2500, "moveIn": 0}
-    }
-    base_rent = input_data.get("baseRent", defaults["baseRent"])
+    # Basic manual calculation fallback
+    manual_rent = input_data.get("manualRent", 45000)
     one_time = input_data.get("oneTime", {})
-    deposit = one_time.get("deposit") or (base_rent * 2)
-        
-    result = {
-        "baseRent": base_rent,
-        "parking": input_data.get("parking", defaults["parking"]),
-        "petFee": input_data.get("petFee", defaults["petFee"]),
-        "utilities": {**defaults["utilities"], **input_data.get("utilities", {})},
-        "oneTime": {**defaults["oneTime"], **one_time, "deposit": deposit}
-    }
-    return jsonify(result)
+    
+    # Simple logic to return a structure the frontend expects
+    return jsonify({
+        "baseRent": manual_rent,
+        "parking": 2000,
+        "petFee": 500,
+        "utilities": {"water": 400, "electricity": 3500, "internet": 800, "trash": 200},
+        "oneTime": {
+            "deposit": one_time.get("deposit", manual_rent * 2),
+            "appFee": 0,
+            "adminFee": one_time.get("adminFee", 2500),
+            "moveIn": 0
+        }
+    })
 
 # ============= LEASE SCANNER API =============
 
@@ -231,6 +245,11 @@ def scan_lease():
     text_content = data.get("leaseText", "")
     
     ai_result = scan_lease_agreement(text_content)
+    if not ai_result:
+        return jsonify({
+            "message": "AI Lease Scanning failed. Please ensure the GEMINI_API_KEY is configured in the backend environment.",
+            "error": "API_KEY_MISSING"
+        }), 503
     
     scan = storage.create_lease_scan(user_id, {
         "filename": data.get("filename", "agreement.pdf"),
@@ -326,5 +345,5 @@ with app.app_context():
     seed_data()
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5001))
+    port = int(os.getenv("PORT", 9002))
     app.run(host='0.0.0.0', port=port, debug=True)

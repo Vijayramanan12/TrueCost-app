@@ -73,6 +73,14 @@ class DBStorage:
             return self._event_to_dict(event)
         return None
 
+    def delete_event(self, user_id, event_id):
+        event = Event.query.filter_by(id=event_id, user_id=user_id).first()
+        if event:
+            db.session.delete(event)
+            db.session.commit()
+            return True
+        return False
+
     # Lease Scan methods
     def create_lease_scan(self, user_id, scan_data):
         scan = LeaseScan(

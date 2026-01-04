@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/lib/language-context";
 
 export default function Login() {
     const [isLogin, setIsLogin] = useState(true);
@@ -18,6 +19,7 @@ export default function Login() {
     const { login } = useAuth();
     const [, setLocation] = useLocation();
     const { toast } = useToast();
+    const { t } = useTranslation();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,17 +28,17 @@ export default function Login() {
                 const res = await apiRequest("POST", "/api/auth/login", { username, password });
                 const data = await res.json();
                 login(data.access_token, data.user);
-                toast({ title: "Welcome back!", description: "Successfully logged in." });
+                toast({ title: t("welcomeBack"), description: t("successLogin") });
                 setLocation("/");
             } else {
                 await apiRequest("POST", "/api/auth/register", { username, password, name, email });
-                toast({ title: "Account created!", description: "Please sign in with your new credentials." });
+                toast({ title: t("accountCreated"), description: t("signInNewCreds") });
                 setIsLogin(true);
             }
         } catch (err: any) {
             toast({
-                title: isLogin ? "Login failed" : "Registration failed",
-                description: err.message || "An error occurred.",
+                title: isLogin ? t("loginFailed") : t("regFailed"),
+                description: err.message || t("errorOccurred"),
                 variant: "destructive"
             });
         }
@@ -49,7 +51,7 @@ export default function Login() {
                 <CardHeader className="text-center pt-8">
                     <CardTitle className="text-3xl font-heading font-bold text-primary">TrueCost AI</CardTitle>
                     <p className="text-muted-foreground">
-                        {isLogin ? "Sign in to your account" : "Create a new account"}
+                        {isLogin ? t("signInAccount") : t("createAccount")}
                     </p>
                 </CardHeader>
                 <CardContent className="pb-8">
@@ -66,7 +68,7 @@ export default function Login() {
                                 {!isLogin && (
                                     <>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full Name</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("fullName")}</label>
                                             <Input
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
@@ -76,7 +78,7 @@ export default function Login() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email Address</label>
+                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("emailAddress")}</label>
                                             <Input
                                                 type="email"
                                                 value={email}
@@ -89,7 +91,7 @@ export default function Login() {
                                     </>
                                 )}
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Username</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("username")}</label>
                                     <Input
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
@@ -99,7 +101,7 @@ export default function Login() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("password")}</label>
                                     <Input
                                         type="password"
                                         value={password}
@@ -113,7 +115,7 @@ export default function Login() {
                         </AnimatePresence>
 
                         <Button type="submit" className="w-full h-12 rounded-xl text-lg font-semibold mt-6 shadow-lg shadow-primary/20">
-                            {isLogin ? "Sign In" : "Create Account"}
+                            {isLogin ? t("signIn") : t("createAccount")}
                         </Button>
 
                         <div className="text-center mt-6">
@@ -122,13 +124,13 @@ export default function Login() {
                                 onClick={() => setIsLogin(!isLogin)}
                                 className="text-sm text-primary font-medium hover:underline underline-offset-4"
                             >
-                                {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
+                                {isLogin ? t("dontHaveAccount") : t("alreadyHaveAccount")}
                             </button>
                         </div>
 
                         {isLogin && (
                             <p className="text-center text-[10px] text-muted-foreground mt-4 uppercase tracking-widest">
-                                Demo: <span className="font-mono text-primary font-bold">demo / password123</span>
+                                {t("demoCreds")}
                             </p>
                         )}
                     </form>

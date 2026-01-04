@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lock, FileText, Camera, Upload, ShieldCheck, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/language-context";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Document, InsertDocument } from "@shared/schema";
 
 export default function Vault() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   const { data: documents = [], isLoading } = useQuery<Document[]>({
     queryKey: ["/api/documents"],
@@ -21,10 +23,10 @@ export default function Vault() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
-      toast.success("Document encrypted and saved to vault");
+      toast.success(t("docSaved"));
     },
     onError: () => {
-      toast.error("Failed to save document");
+      toast.error(t("docFailed"));
     }
   });
 
@@ -53,17 +55,17 @@ export default function Vault() {
       <header className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-2">
-            Secure Vault <Lock className="w-6 h-6 text-accent" />
+            {t("vaultTitle")} <Lock className="w-6 h-6 text-accent" />
           </h1>
-          <p className="text-muted-foreground">Encrypted storage for vital docs.</p>
+          <p className="text-muted-foreground">{t("vaultSubtitle")}</p>
         </div>
       </header>
 
       <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 mb-8 flex items-start gap-3">
         <ShieldCheck className="w-6 h-6 text-accent shrink-0 mt-1" />
         <div>
-          <h3 className="font-semibold text-accent-foreground text-sm">Encrypted Asset Locker</h3>
-          <p className="text-xs text-muted-foreground mt-1">Secure storage for Gold loans, Property docs, and Lease agreements. Locally encrypted.</p>
+          <h3 className="font-semibold text-accent-foreground text-sm">{t("assetLockerTitle")}</h3>
+          <p className="text-xs text-muted-foreground mt-1">{t("assetLockerDesc")}</p>
         </div>
       </div>
 
@@ -83,7 +85,7 @@ export default function Vault() {
           data-testid="button-upload-doc"
         >
           {isUploading ? <Loader2 className="w-8 h-8 animate-spin text-accent" /> : <Upload className="w-8 h-8 text-muted-foreground" />}
-          <span className="text-xs font-medium">{isUploading ? "Encrypting..." : "Upload Doc"}</span>
+          <span className="text-xs font-medium">{isUploading ? t("encrypting") : t("uploadDoc")}</span>
         </Button>
         <Button
           variant="outline"
@@ -92,12 +94,12 @@ export default function Vault() {
           data-testid="button-add-photo"
         >
           <Camera className="w-8 h-8 text-muted-foreground" />
-          <span className="text-xs font-medium">Add Photo</span>
+          <span className="text-xs font-medium">{t("addPhoto")}</span>
         </Button>
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-heading font-semibold">Stored Documents</h3>
+        <h3 className="text-lg font-heading font-semibold">{t("storedDocuments")}</h3>
         <div className="space-y-3">
           {documents.map((doc, i) => (
             <motion.div
