@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation, Language } from "@/lib/language-context";
+import { translations } from "@/lib/translations";
 
 interface UserProfile {
   id: string;
@@ -22,6 +24,7 @@ interface UserProfile {
 export default function Profile() {
   const { logout, user: authUser } = useAuth();
   const { toast } = useToast();
+  const { t, setLanguage } = useTranslation();
   const [languageOpen, setLanguageOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -37,9 +40,15 @@ export default function Profile() {
       const res = await apiRequest("PUT", "/api/profile", updatedData);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: UserProfile) => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      toast({ title: "Updated", description: "Settings saved successfully." });
+
+      // Update local language state immediately
+      if (data.language) {
+        setLanguage(data.language as Language);
+      }
+
+      toast({ title: t("updated"), description: t("settingsSaved") });
       // Close all dialogs
       setLanguageOpen(false);
       setNotificationsOpen(false);
@@ -73,7 +82,7 @@ export default function Profile() {
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
       <header className="mb-8">
-        <h1 className="text-3xl font-heading font-bold text-foreground">Profile</h1>
+        <h1 className="text-3xl font-heading font-bold text-foreground">{t("profile")}</h1>
       </header>
 
       <Card className="p-6 mb-8 border-none shadow-sm bg-primary text-primary-foreground relative overflow-hidden">
@@ -93,7 +102,7 @@ export default function Profile() {
 
       <div className="space-y-6">
         <section>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">Settings</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">{t("settings")}</h3>
           <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
 
             {/* Language Setting */}
@@ -102,7 +111,7 @@ export default function Profile() {
                 <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <Languages className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-sm">Language</span>
+                    <span className="font-medium text-sm">{t("language")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{profile?.language || "English"}</span>
@@ -111,7 +120,7 @@ export default function Profile() {
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-[340px] rounded-3xl">
-                <DialogHeader><DialogTitle className="font-heading">Select Language</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="font-heading">{t("selectLanguage")}</DialogTitle></DialogHeader>
                 <div className="grid gap-2 pt-4">
                   {languages.map((lang) => (
                     <button
@@ -134,7 +143,7 @@ export default function Profile() {
                 <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <Bell className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-sm">Notifications</span>
+                    <span className="font-medium text-sm">{t("notifications")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{profile?.notifications || "On"}</span>
@@ -143,7 +152,7 @@ export default function Profile() {
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-[340px] rounded-3xl">
-                <DialogHeader><DialogTitle className="font-heading">Push Notifications</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="font-heading">{t("pushNotifications")}</DialogTitle></DialogHeader>
                 <div className="grid gap-2 pt-4">
                   {["On", "Off"].map((state) => (
                     <button
@@ -166,7 +175,7 @@ export default function Profile() {
                 <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-sm">Privacy & Security</span>
+                    <span className="font-medium text-sm">{t("privacy")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{profile?.privacy || "High"}</span>
@@ -175,7 +184,7 @@ export default function Profile() {
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-[340px] rounded-3xl">
-                <DialogHeader><DialogTitle className="font-heading">Privacy Level</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="font-heading">{t("privacyLevel")}</DialogTitle></DialogHeader>
                 <div className="grid gap-2 pt-4">
                   {privacyOptions.map((opt) => (
                     <button
@@ -203,7 +212,7 @@ export default function Profile() {
                 <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <CreditCard className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-sm">Subscription</span>
+                    <span className="font-medium text-sm">{t("subscription")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{profile?.subscription || "Free"}</span>
@@ -212,11 +221,11 @@ export default function Profile() {
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-[340px] rounded-3xl">
-                <DialogHeader><DialogTitle className="font-heading">Your Plan</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="font-heading">{t("yourPlan")}</DialogTitle></DialogHeader>
                 <div className="p-6 bg-primary/5 rounded-2xl border border-primary/20 text-center relative overflow-hidden">
                   <Sparkles className="w-12 h-12 text-primary/10 absolute -top-2 -right-2 rotate-12" />
                   <h4 className="text-2xl font-heading font-black text-primary mb-1 uppercase tracking-tighter">
-                    {profile?.subscription || "Free"} Edition
+                    {profile?.subscription || t("freeEdition")}
                   </h4>
                   <p className="text-xs text-muted-foreground mb-4">Unlimited lease scans & vault storage</p>
                   <Button className="w-full rounded-xl">Check for Upgrades</Button>
@@ -230,22 +239,22 @@ export default function Profile() {
                 <button className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors border-b last:border-0">
                   <div className="flex items-center gap-3">
                     <Settings className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-sm">App Settings</span>
+                    <span className="font-medium text-sm">{t("appSettings")}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </button>
               </DialogTrigger>
               <DialogContent className="max-w-[340px] rounded-3xl">
                 <DialogHeader>
-                  <DialogTitle className="font-heading">App Settings</DialogTitle>
+                  <DialogTitle className="font-heading">{t("appSettings")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Display</h4>
                     <div className="p-4 bg-muted/30 rounded-2xl">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Dark Mode</span>
-                        <span className="text-xs text-muted-foreground">System Default</span>
+                        <span className="text-sm font-medium">{t("darkMode")}</span>
+                        <span className="text-xs text-muted-foreground">{t("systemDefault")}</span>
                       </div>
                     </div>
                   </div>
@@ -253,11 +262,11 @@ export default function Profile() {
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</h4>
                     <button className="w-full p-4 bg-muted/30 rounded-2xl text-left hover:bg-muted/50 transition-colors">
-                      <span className="text-sm font-medium">Clear Cache</span>
+                      <span className="text-sm font-medium">{t("clearCache")}</span>
                       <p className="text-xs text-muted-foreground mt-1">Free up storage space</p>
                     </button>
                     <button className="w-full p-4 bg-destructive/10 text-destructive rounded-2xl text-left hover:bg-destructive/20 transition-colors">
-                      <span className="text-sm font-medium">Delete All Data</span>
+                      <span className="text-sm font-medium">{t("deleteAllData")}</span>
                       <p className="text-xs opacity-70 mt-1">This action cannot be undone</p>
                     </button>
                   </div>
@@ -278,7 +287,7 @@ export default function Profile() {
           className="w-full h-12 rounded-2xl gap-2 shadow-sm"
           onClick={() => logout()}
         >
-          <LogOut className="w-4 h-4" /> Sign Out
+          <LogOut className="w-4 h-4" /> {t("signOut")}
         </Button>
 
         <p className="text-[10px] text-center text-muted-foreground">

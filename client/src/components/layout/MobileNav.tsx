@@ -3,9 +3,23 @@ import { NAV_ITEMS } from "@/lib/constants";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
+import { useTranslation, TranslationKeys } from "@/lib/language-context";
 
 export function MobileNav() {
   const [location] = useLocation();
+  const { t } = useTranslation();
+
+  const getTranslationKey = (label: string): TranslationKeys => {
+    const map: Record<string, TranslationKeys> = {
+      "Home": "home",
+      "Calculator": "calculator",
+      "Timeline": "timeline",
+      "Vault": "vault",
+      "Lease Scanner": "leaseScanner",
+      "Loan Calculator": "loanCalculator"
+    };
+    return map[label] || (label.toLowerCase() as TranslationKeys);
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur-lg pb-safe">
@@ -27,13 +41,13 @@ export function MobileNav() {
                     />
                   )}
                 </div>
-                <span className="text-[10px] font-medium mt-1">{item.label}</span>
+                <span className="text-[10px] font-medium mt-1">{t(getTranslationKey(item.label))}</span>
               </a>
             </Link>
           );
         })}
         <Link href="/profile">
-          <a 
+          <a
             className={cn(
               "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200",
               location === "/profile" ? "text-primary" : "text-muted-foreground hover:text-primary/70"
@@ -49,7 +63,7 @@ export function MobileNav() {
                 />
               )}
             </div>
-            <span className="text-[10px] font-medium mt-1">Profile</span>
+            <span className="text-[10px] font-medium mt-1">{t("profile")}</span>
           </a>
         </Link>
       </nav>

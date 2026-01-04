@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from models import db, User, UserProfile, Document, Event
 from storage import storage
-from gemini_util import analyze_rental_listing, scan_lease_agreement
+from openai_util import analyze_rental_listing, scan_lease_agreement
 
 # Load environment variables
 load_dotenv()
@@ -213,7 +213,7 @@ def analyze():
             return jsonify(result)
         # If AI is attempted but fails (e.g. key missing), return error
         return jsonify({
-            "message": "AI Analysis failed. Please ensure the GEMINI_API_KEY is configured in the backend environment.",
+            "message": "AI Analysis failed. Please ensure the OPENAI_API_KEY is configured in the backend environment.",
             "error": "API_KEY_MISSING"
         }), 503
 
@@ -247,7 +247,7 @@ def scan_lease():
     ai_result = scan_lease_agreement(text_content)
     if not ai_result:
         return jsonify({
-            "message": "AI Lease Scanning failed. Please ensure the GEMINI_API_KEY is configured in the backend environment.",
+            "message": "AI Lease Scanning failed. Please ensure the OPENAI_API_KEY is configured in the backend environment.",
             "error": "API_KEY_MISSING"
         }), 503
     

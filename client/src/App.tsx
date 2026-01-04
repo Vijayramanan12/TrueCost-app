@@ -46,19 +46,39 @@ function Router() {
   );
 }
 
+import { LanguageProvider } from "./lib/language-context";
+import { useQuery } from "@tanstack/react-query";
+
+interface UserProfile {
+  language: string;
+}
+
+function AppContent() {
+  const { data: profile } = useQuery<UserProfile>({
+    queryKey: ["/api/profile"],
+    enabled: !!localStorage.getItem("auth_token"),
+  });
+
+  return (
+    <LanguageProvider initialLanguage={profile?.language || "English"}>
+      <TooltipProvider>
+        <WouterRouter>
+          <div className="min-h-screen bg-background pb-16">
+            <Router />
+            <MobileNav />
+          </div>
+          <Toaster />
+        </WouterRouter>
+      </TooltipProvider>
+    </LanguageProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter>
-            <div className="min-h-screen bg-background pb-16">
-              <Router />
-              <MobileNav />
-            </div>
-            <Toaster />
-          </WouterRouter>
-        </TooltipProvider>
+        <AppContent />
       </AuthProvider>
     </QueryClientProvider>
   );
