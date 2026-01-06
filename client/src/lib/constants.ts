@@ -9,6 +9,7 @@ export const NAV_ITEMS = [
 
 export const MOCK_COST_BREAKDOWN = {
   baseRent: 45000,
+  maintenance: 3000,
   parking: 2000,
   petFee: 500,
   utilities: {
@@ -23,6 +24,14 @@ export const MOCK_COST_BREAKDOWN = {
     adminFee: 2000,
     moveIn: 5000,
   },
+  metadata: {
+    isDepositRefundable: true,
+    noticePeriodDays: 30,
+    lockInPeriodMonths: 6,
+    neighborhood: "HSR Layout",
+    commuteTime: "15 min",
+  },
+  confidenceScore: 0.95
 };
 
 export const MOCK_LOCAL_STATS = {

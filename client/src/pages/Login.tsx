@@ -21,8 +21,15 @@ export default function Login() {
     const { toast } = useToast();
     const { t } = useTranslation();
 
+    const validateEmail = (email: string) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+
+
         try {
             if (isLogin) {
                 const res = await apiRequest("POST", "/api/auth/login", { username, password });
@@ -31,7 +38,11 @@ export default function Login() {
                 toast({ title: t("welcomeBack"), description: t("successLogin") });
                 setLocation("/");
             } else {
-                await apiRequest("POST", "/api/auth/register", { username, password, name, email });
+                await apiRequest("POST", "/api/auth/register", {
+                    name,
+                    username: name,
+                    password
+                });
                 toast({ title: t("accountCreated"), description: t("signInNewCreds") });
                 setIsLogin(true);
             }
@@ -77,29 +88,21 @@ export default function Login() {
                                                 required
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("emailAddress")}</label>
-                                            <Input
-                                                type="email"
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                placeholder="arjun@example.com"
-                                                className="rounded-xl h-12 bg-muted/30 border-none focus-visible:ring-1"
-                                                required
-                                            />
-                                        </div>
+
                                     </>
                                 )}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("username")}</label>
-                                    <Input
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        placeholder="demo_user"
-                                        className="rounded-xl h-12 bg-muted/30 border-none focus-visible:ring-1"
-                                        required
-                                    />
-                                </div>
+                                {isLogin && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("username")}</label>
+                                        <Input
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            placeholder="demo_user"
+                                            className="rounded-xl h-12 bg-muted/30 border-none focus-visible:ring-1"
+                                            required
+                                        />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("password")}</label>
                                     <Input

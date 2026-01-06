@@ -17,11 +17,12 @@ class UserProfile(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
     language = db.Column(db.String(50), default="English")
     notifications = db.Column(db.String(20), default="On")
     privacy = db.Column(db.String(20), default="High")
     subscription = db.Column(db.String(20), default="Free")
+    account_id = db.Column(db.String(20), unique=True, nullable=True)
 
 class Document(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
@@ -41,6 +42,9 @@ class Event(db.Model):
     date = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(50)) # e.g., inspection, payment, legal
     status = db.Column(db.String(20), nullable=False) # completed, upcoming, pending
+    isoDate = db.Column(db.String(50)) # ISO string for precise sorting/grouping
+    description = db.Column(db.Text)
+    reminder = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class LeaseScan(db.Model):
@@ -63,3 +67,10 @@ class LoanCalculation(db.Model):
     total_payable = db.Column(db.Float, nullable=False)
     total_interest = db.Column(db.Float, nullable=False)
     calculated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class EmailVerification(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    otp = db.Column(db.String(6), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

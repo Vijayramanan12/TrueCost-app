@@ -1,6 +1,6 @@
-from models import db, User, UserProfile, Document, Event, LeaseScan, LoanCalculation
+from models import db, User, UserProfile, Document, Event, LeaseScan, LoanCalculation, EmailVerification
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class DBStorage:
     def __init__(self):
@@ -57,7 +57,10 @@ class DBStorage:
             title=event_data.get('title'),
             date=event_data.get('date'),
             type=event_data.get('type'),
-            status=event_data.get('status')
+            status=event_data.get('status'),
+            isoDate=event_data.get('isoDate'),
+            description=event_data.get('description'),
+            reminder=event_data.get('reminder')
         )
         db.session.add(event)
         db.session.commit()
@@ -69,6 +72,9 @@ class DBStorage:
             if 'status' in event_data: event.status = event_data['status']
             if 'title' in event_data: event.title = event_data['title']
             if 'date' in event_data: event.date = event_data['date']
+            if 'isoDate' in event_data: event.isoDate = event_data['isoDate']
+            if 'description' in event_data: event.description = event_data['description']
+            if 'reminder' in event_data: event.reminder = event_data['reminder']
             db.session.commit()
             return self._event_to_dict(event)
         return None
@@ -133,6 +139,58 @@ class DBStorage:
             return self._profile_to_dict(profile)
         return None
     
+    def get_profile_by_email(self, email):
+        profile = UserProfile.query.filter_by(email=email).first()
+        return self._profile_to_dict(profile) if profile else None
+
+    def delete_user_account(self, user_id):
+        # 1. Get User
+        user = User.query.get(user_id)
+        if not user:
+            return False
+
+        profile = UserProfile.query.filter_by(user_id=user_id).first()
+        email = profile.email if profile else None
+
+        # 2. Delete related records
+        Document.query.filter_by(user_id=user_id).delete()
+        Event.query.filter_by(user_id=user_id).delete()
+        LeaseScan.query.filter_by(user_id=user_id).delete()
+        LoanCalculation.query.filter_by(user_id=user_id).delete()
+        
+        if profile:
+            db.session.delete(profile)
+            
+        if email:
+            EmailVerification.query.filter_by(email=email).delete()
+
+        # 3. Delete User
+        db.session.delete(user)
+        db.session.commit()
+        return True
+
+    # OTP methods
+    def save_otp(self, email, otp, expiry_minutes=10):
+        # Remove existing OTP for this email
+        existing = EmailVerification.query.filter_by(email=email).first()
+        if existing:
+            db.session.delete(existing)
+        
+        expires = datetime.utcnow() + timedelta(minutes=expiry_minutes)
+        ver = EmailVerification(email=email, otp=otp, expires_at=expires)
+        db.session.add(ver)
+        db.session.commit()
+        return ver
+
+    def get_otp(self, email):
+        return EmailVerification.query.filter_by(email=email).first()
+
+    def delete_otp(self, email):
+        otp_rec = EmailVerification.query.filter_by(email=email).first()
+        if otp_rec:
+            db.session.delete(otp_rec)
+            db.session.commit()
+
     def create_user_profile(self, user_id, profile_data):
         profile = UserProfile(
             user_id=user_id,
@@ -141,7 +199,8 @@ class DBStorage:
             language=profile_data.get('language', 'English'),
             notifications=profile_data.get('notifications', 'On'),
             privacy=profile_data.get('privacy', 'High'),
-            subscription=profile_data.get('subscription', 'Free')
+            subscription=profile_data.get('subscription', 'Free'),
+            account_id=f"TC-{user_id[:4].upper()}"
         )
         db.session.add(profile)
         db.session.commit()
@@ -174,8 +233,11 @@ class DBStorage:
             "id": e.id,
             "title": e.title,
             "date": e.date,
+            "isoDate": e.isoDate,
             "type": e.type,
-            "status": e.status
+            "status": e.status,
+            "description": e.description,
+            "reminder": e.reminder
         }
 
     def _loan_to_dict(self, c):
@@ -205,8 +267,14 @@ class DBStorage:
         }
 
     def _profile_to_dict(self, p):
+        # Auto-populate account_id for legacy users if missing
+        if not p.account_id and p.user_id:
+            p.account_id = f"TC-{p.user_id[:4].upper()}"
+            db.session.commit()
+
         return {
             "id": p.id,
+            "account_id": p.account_id,
             "name": p.name,
             "email": p.email,
             "language": p.language,

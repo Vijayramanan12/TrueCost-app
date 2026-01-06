@@ -142,3 +142,17 @@ vite.config.ts.timestamp-*
 .DS_Store
 server/public
 *.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+
+# Database
+*.db
+*.sqlite
+
+# Instance/Uploads
+instance/
+backend/instance/
+backend/uploads/
+uploads/

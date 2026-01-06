@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,7 +34,18 @@ export default function Calculator() {
   const [manualAdminFee, setManualAdminFee] = useState(2500);
 
   const [showAd, setShowAd] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(5);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showAd && adCountdown > 0) {
+      timer = setInterval(() => {
+        setAdCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [showAd, adCountdown]);
 
 
   const mutation = useMutation({
@@ -43,6 +54,7 @@ export default function Calculator() {
       return res.json();
     },
     onSuccess: (data) => {
+      setAdCountdown(5); // Reset countdown
       setShowAd(true);
       setAnalyzing(false);
       setResult(data);
@@ -97,12 +109,26 @@ export default function Calculator() {
   };
 
   const totalMonthly = result
-    ? result.baseRent + result.parking + result.petFee + Object.values(result.utilities).reduce((a, b) => a + b, 0)
+    ? (result.baseRent > 0 ? result.baseRent : 0) +
+    (result.maintenance > 0 ? result.maintenance : 0) +
+    (result.parking > 0 ? result.parking : 0) +
+    (result.petFee > 0 ? result.petFee : 0) +
+    Object.values(result.utilities).reduce((a: any, b: any) => a + (typeof b === 'number' && b > 0 ? b : 0), 0)
     : 0;
 
   const totalMoveIn = result
-    ? result.oneTime.deposit + result.oneTime.appFee + result.oneTime.adminFee + result.oneTime.moveIn + result.baseRent
+    ? (result.oneTime.deposit > 0 ? result.oneTime.deposit : 0) +
+    (result.oneTime.appFee > 0 ? result.oneTime.appFee : 0) +
+    (result.oneTime.adminFee > 0 ? result.oneTime.adminFee : 0) +
+    (result.oneTime.moveIn > 0 ? result.oneTime.moveIn : 0) +
+    (result.baseRent > 0 ? result.baseRent : 0)
     : 0;
+
+  const adminAppFeesSum = result
+    ? (result.oneTime.appFee > 0 ? result.oneTime.appFee : 0) + (result.oneTime.adminFee > 0 ? result.oneTime.adminFee : 0)
+    : 0;
+
+  const hasValidAdminFees = result && (result.oneTime.appFee > 0 || result.oneTime.adminFee > 0);
 
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
@@ -313,8 +339,9 @@ export default function Calculator() {
                 size="sm"
                 onClick={() => setShowAd(false)}
                 className="text-muted-foreground hover:text-foreground"
+                disabled={adCountdown > 0}
               >
-                {t("skipAd")}
+                {adCountdown > 0 ? `${t("skipAd")} (${adCountdown}s)` : t("skipAd")}
               </Button>
             </div>
 
@@ -393,7 +420,7 @@ export default function Calculator() {
                 <Row label={t("parkingFee")} amount={result.parking} />
                 <Row label={t("petRent")} amount={result.petFee} />
                 <div className="h-px bg-border my-2" />
-                <Row label={t("estimatedUtilities")} amount={Object.values(result.utilities).reduce((a, b) => a + b, 0)} highlight />
+                <Row label={t("estimatedUtilities")} amount={Object.values(result.utilities).reduce((a: any, b: any) => a + (typeof b === 'number' && b > 0 ? b : 0), 0)} highlight />
                 <div className="pl-4 space-y-2 mt-2 border-l-2 border-muted">
                   <Row label={t("waterSewer")} amount={result.utilities.water} small />
                   <Row label={t("electricity")} amount={result.utilities.electricity} small />
@@ -408,7 +435,7 @@ export default function Calculator() {
               <div className="bg-muted/30 border rounded-xl p-4 space-y-3">
                 <Row label={t("firstMonth")} amount={result.baseRent} />
                 <Row label={t("securityDeposit")} amount={result.oneTime.deposit} />
-                <Row label={t("adminAppFees")} amount={result.oneTime.appFee + result.oneTime.adminFee} />
+                <Row label={t("adminAppFees")} amount={hasValidAdminFees ? adminAppFeesSum : -1} />
                 <div className="h-px bg-border my-2" />
                 <Row label={t("totalMoveIn")} amount={totalMoveIn} bold />
               </div>
@@ -416,11 +443,24 @@ export default function Calculator() {
 
             {/* Local Stats */}
             <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg">{t("locationInsights")}</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-heading font-semibold text-lg">{t("locationInsights")}</h3>
+                {result.metadata?.neighborhood && String(result.metadata.neighborhood) !== "-1" && (
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg font-medium">
+                    {String(result.metadata.neighborhood)}
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <StatCard label={t("safetyScore")} value={`${MOCK_LOCAL_STATS.safetyScore}/10`} />
                 <StatCard label={t("walkScore")} value={MOCK_LOCAL_STATS.walkScore} />
-                <StatCard label={t("commute")} value={MOCK_LOCAL_STATS.commuteTime} />
+                <StatCard
+                  label={t("commute")}
+                  value={result.metadata?.commuteTime && String(result.metadata.commuteTime) !== "-1"
+                    ? String(result.metadata.commuteTime)
+                    : t("notSpecified")}
+                  isWarning={!result.metadata?.commuteTime || String(result.metadata.commuteTime) === "-1"}
+                />
                 <StatCard label={t("gridStability")} value={MOCK_LOCAL_STATS.powerReliability} />
               </div>
             </div>
@@ -436,20 +476,36 @@ export default function Calculator() {
   );
 }
 
-function Row({ label, amount, highlight, small, bold }: { label: string, amount: number, highlight?: boolean, small?: boolean, bold?: boolean }) {
+function Row({ label, amount, highlight, small, bold }: { label: string, amount: any, highlight?: boolean, small?: boolean, bold?: boolean }) {
+  const { t } = useTranslation();
+
+  let displayValue = "";
+  let isWarning = false;
+
+  if (amount === -1 || amount === "-1") {
+    displayValue = t("notSpecified");
+    isWarning = true;
+  } else if (amount === "metered") {
+    displayValue = "Metered";
+  } else if (typeof amount === 'number') {
+    displayValue = `₹${amount.toLocaleString('en-IN')}`;
+  } else {
+    displayValue = String(amount);
+  }
+
   return (
     <div className={`flex justify-between items-center ${small ? 'text-xs text-muted-foreground' : 'text-sm'} ${highlight ? 'text-accent-foreground font-medium' : ''} ${bold ? 'font-bold text-base' : ''}`}>
       <span>{label}</span>
-      <span>₹{amount.toLocaleString('en-IN')}</span>
+      <span className={isWarning ? "text-amber-500 font-medium italic" : ""}>{displayValue}</span>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string, value: string | number }) {
+function StatCard({ label, value, isWarning }: { label: string, value: string | number, isWarning?: boolean }) {
   return (
     <div className="bg-card border p-3 rounded-xl shadow-sm text-center">
       <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
-      <div className="text-xl font-heading font-bold text-foreground">{value}</div>
+      <div className={`text-xl font-heading font-bold ${isWarning ? "text-amber-500 italic text-sm" : "text-foreground"}`}>{value}</div>
     </div>
   );
 }

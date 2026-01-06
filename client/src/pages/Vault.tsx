@@ -17,8 +17,8 @@ export default function Vault() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (doc: InsertDocument) => {
-      const res = await apiRequest("POST", "/api/documents", doc);
+    mutationFn: async (formData: FormData) => {
+      const res = await apiRequest("POST", "/api/documents/upload", formData);
       return res.json();
     },
     onSuccess: () => {
@@ -33,22 +33,31 @@ export default function Vault() {
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", file.type.includes("image") ? "media" : "legal");
 
-      // Simulate file processing/parsing -> Extract metadata
-      const newDoc: InsertDocument = {
-        name: file.name,
-        type: file.type.includes('image') ? 'media' : 'legal',
-        date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        url: URL.createObjectURL(file) // For now, locally created URL - in real app would be server URL
-      };
-
-      mutation.mutate(newDoc);
+      mutation.mutate(formData);
     }
   };
 
   const isUploading = mutation.isPending;
 
+
+  const handleView = async (filename: string) => {
+    try {
+      // Authenticated fetch for the file
+      const res = await apiRequest("GET", `/api/documents/view/${filename}`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+
+      // Clean up URL object after a delay (optional, but good practice)
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      toast.error(t("viewFailed") || "Failed to open document");
+    }
+  };
 
   return (
     <div className="pb-24 pt-8 px-6 max-w-md mx-auto min-h-screen bg-background">
@@ -107,6 +116,7 @@ export default function Vault() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.1 }}
+              onClick={() => handleView(doc.name)}
               className="bg-card border p-4 rounded-xl flex items-center justify-between group cursor-pointer hover:shadow-md transition-all relative"
             >
               <div className="flex items-center gap-3">

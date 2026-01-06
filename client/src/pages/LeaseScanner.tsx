@@ -1,20 +1,52 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScanSearch, ShieldAlert, BookOpen, Scale, ChevronRight, X, Loader2 } from "lucide-react";
+import { ScanSearch, ShieldAlert, BookOpen, Scale, ChevronRight, X, Loader2, CheckCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/language-context";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LeaseScanner() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [analyzing, setAnalyzing] = useState(false);
   const [showAd, setShowAd] = useState(false);
+  const [scanResult, setScanResult] = useState<any>(null);
 
-  const handleUpload = () => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setAnalyzing(true);
-    setTimeout(() => {
+    setScanResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      // Defaulting to Maharashtra for now as per previous logic, can be expanded to selector later
+      formData.append("state", "Maharashtra");
+
+      const res = await apiRequest("POST", "/api/lease/scan", formData);
+      const data = await res.json();
+
+      setScanResult(data);
+      setShowAd(true); // Show ad to gate the results
+      toast({
+        title: "Analysis Complete",
+        description: "Rent agreement scanned successfully"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Scan Failed",
+        description: error.message || "Failed to analyze document",
+        variant: "destructive"
+      });
+    } finally {
       setAnalyzing(false);
-      setShowAd(true);
-    }, 1500);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const stateRights = [
@@ -32,21 +64,81 @@ export default function LeaseScanner() {
         <p className="text-muted-foreground">{t("leaseScannerSubtitle")}</p>
       </header>
 
+      {/* Upload Section */}
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 mb-8 text-center">
         <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <ScanSearch className="w-8 h-8 text-blue-500" />
         </div>
         <h2 className="font-heading font-semibold text-lg mb-2">{t("scanYourAgreement")}</h2>
         <p className="text-sm text-muted-foreground mb-4">{t("scanAgreementDesc")}</p>
-        <Button className="w-full" onClick={handleUpload} disabled={analyzing}>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept=".pdf,.txt"
+        />
+
+        <Button
+          className="w-full"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={analyzing}
+        >
           {analyzing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("analyzing")}
             </>
-          ) : t("uploadDocument")}
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" /> {t("uploadDocument")}
+            </>
+          )}
         </Button>
       </div>
 
+      {/* Analysis Result Section */}
+      <AnimatePresence>
+        {scanResult && !showAd && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-8 space-y-4"
+          >
+            <div className="bg-card border rounded-2xl p-6 shadow-sm">
+              <h3 className="font-heading font-bold text-xl mb-4 flex items-center gap-2 text-foreground">
+                <CheckCircle className="w-5 h-5 text-green-500" /> Analysis Result
+              </h3>
+
+              <div className="space-y-4">
+                <div className="bg-muted/30 p-4 rounded-xl">
+                  <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Applicable Law</p>
+                  <p className="font-semibold text-sm">{scanResult.law_name}</p>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-xl">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Key Protection</p>
+                  <p className="text-sm">{scanResult.key_protection}</p>
+                </div>
+
+                {scanResult.red_flags && (
+                  <div className="bg-red-50 dark:bg-red-950/30 p-4 rounded-xl border border-red-100 dark:border-red-900">
+                    <p className="text-xs text-red-600 dark:text-red-400 uppercase font-bold mb-2 flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4" /> Red Flags & Issues
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                      {scanResult.red_flags}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Ad Modal */}
       <AnimatePresence>
         {showAd && (
           <motion.div

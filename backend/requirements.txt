@@ -4,7 +4,10 @@ flask-sqlalchemy
 flask-jwt-extended
 flask-bcrypt
 google-generativeai
+groq
 python-dotenv
 pydantic
 pytest
 flask-executor
+pypdf
+email-validator

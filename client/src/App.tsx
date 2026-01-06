@@ -11,6 +11,7 @@ import Timeline from "@/pages/Timeline";
 import LeaseScanner from "@/pages/LeaseScanner";
 import Profile from "@/pages/Profile";
 import LoanCalculator from "@/pages/LoanCalculator";
+import Terms from "@/pages/Terms";
 import NotFound from "@/pages/not-found";
 
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -25,6 +26,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/login" component={Login} />
+        <Route path="/terms" component={Terms} />
         <Route>
           {() => { window.location.href = "/login"; return null; }}
         </Route>
@@ -41,6 +43,7 @@ function Router() {
       <Route path="/lease-scanner" component={LeaseScanner} />
       <Route path="/loan-calculator" component={LoanCalculator} />
       <Route path="/profile" component={Profile} />
+      <Route path="/terms" component={Terms} />
       <Route component={NotFound} />
     </Switch>
   );
