@@ -493,7 +493,7 @@ export default function Profile() {
         </Button>
 
         <p className="text-[10px] text-center text-muted-foreground pt-4 pb-8">
-          TrueCost v1.0.4 • {authUser?.username} • TC-{authUser?.id?.substring(0, 4)}
+          TrueCost v1.0.4 • {authUser?.username} • {profile?.account_id || "TC-GUEST"}
         </p>
       </div>
     </div>
