@@ -53,9 +53,11 @@ export function log(message: string, source = "express") {
   });
 
   // 2. Setup the Proxy in production IF it's an /api request
-  // We do this BEFORE body parsing so the proxy receives the raw request stream
-  const backendUrl = process.env.BACKEND_URL;
-  if (process.env.NODE_ENV === "production" && backendUrl) {
+  const backendUrl = process.env.NODE_ENV === "production"
+    ? "https://truecost-backend.onrender.com"
+    : process.env.BACKEND_URL;
+
+  if (backendUrl) {
     log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
     // If it's a full URL already (starts with http), use it exactly as provided
     // Render's public 'url' includes https:// and the hostname.
