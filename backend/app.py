@@ -625,6 +625,10 @@ def verify_email_real():
 
 # ============= HEALTH CHECK =============
 
+@app.route('/', methods=['GET', 'HEAD'])
+def root():
+    return jsonify(status="ok", service="truecost-backend"), 200
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify(status="healthy", timestamp=time.time())
