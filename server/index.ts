@@ -64,11 +64,12 @@ app.use((req, res, next) => {
   // Proxy /api requests to the Python backend in production if configured
   const backendUrl = process.env.BACKEND_URL;
   if (process.env.NODE_ENV === "production" && backendUrl) {
-    log(`Proxying /api to ${backendUrl}`, "proxy");
+    const target = backendUrl.startsWith("http") ? backendUrl : `http://${backendUrl}:5001`;
+    log(`Proxying /api to ${target}`, "proxy");
     app.use(
       "/api",
       createProxyMiddleware({
-        target: backendUrl,
+        target,
         changeOrigin: true,
         secure: false, // For internal Render networking/self-signed certs
       })
