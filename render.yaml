@@ -30,8 +30,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL # Using the public URL for 100% DNS reliability
-        value: https://truecost-backend.onrender.com
+      - key: BACKEND_URL # Dynamically link to the backend service's public URL
+        fromService:
+          type: web
+          name: truecost-backend
+          property: url
 
 databases:
   - name: truecost-db

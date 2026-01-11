@@ -53,20 +53,16 @@ export function log(message: string, source = "express") {
   });
 
   // 2. Setup the Proxy in production IF it's an /api request
-  const backendUrl = process.env.NODE_ENV === "production"
-    ? "https://truecost-backend.onrender.com"
-    : process.env.BACKEND_URL;
+  const backendUrl = process.env.BACKEND_URL;
 
   if (backendUrl) {
     log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
-    // If it's a full URL already (starts with http), use it exactly as provided
-    // Render's public 'url' includes https:// and the hostname.
+    // Ensure the target has a protocol
     let target = backendUrl.trim();
     if (!target.startsWith("http")) {
       target = `http://${target}`;
-      // Only add port 5001 if it's a naked hostname (no colon)
       if (!target.includes(":")) {
-        target = `${target}:5001`;
+        target = `${target}:5001`; // Default to 5001 for internal hosts
       }
     }
 
