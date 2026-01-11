@@ -75,7 +75,7 @@ export function log(message: string, source = "express") {
           error: (err, _req, res) => {
             log(`Proxy Error (${target}): ${err.message}`, "proxy");
             (res as Response).status(504).json({
-              message: "Gateway Timeout: Backend unreachable",
+              message: "Backend Connection Error: Service might be starting up or sleeping",
               target: target,
               error: err.message
             });

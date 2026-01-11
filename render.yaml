@@ -32,11 +32,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL # Dynamically link to the backend service's internal host
+      - key: BACKEND_URL # Using the public URL for guaranteed resolution
         fromService:
           type: web
           name: truecost-backend
-          property: host
+          property: url
       - key: PORT
         value: 5000
 
