@@ -366,9 +366,9 @@ export default function Timeline() {
                         whileHover={{ y: -2 }}
                         className={cn(
                           "relative overflow-hidden rounded-2xl transition-all duration-300",
-                          "bg-card border border-muted/50 hover:border-primary/20",
-                          event.status === 'completed' && "bg-accent/5 hover:bg-accent/10" ||
-                          event.status === 'pending' && "bg-amber-500/5 hover:bg-amber-500/10"
+                          "bg-card border border-border/50 dark:border-border/60 hover:border-primary/30",
+                          event.status === 'completed' && "bg-accent/5 dark:bg-accent/10 hover:bg-accent/15",
+                          event.status === 'pending' && "bg-amber-500/5 dark:bg-amber-500/10 hover:bg-amber-500/15"
                         )}
                       >
                         {/* Gradient accent bar */}
@@ -478,8 +478,8 @@ export default function Timeline() {
 
         {/* Future Placeholder */}
         <div className="relative pl-10 opacity-40 group cursor-default mt-8">
-          <div className="absolute left-[10px] top-4 w-5 h-5 rounded-full border-4 border-background bg-muted group-hover:bg-muted-foreground transition-colors" />
-          <div className="border-2 border-dashed border-muted rounded-[1.5rem] p-5 text-center text-muted-foreground text-sm font-medium italic bg-muted/30">
+          <div className="absolute left-[10px] top-4 w-5 h-5 rounded-full border-4 border-background bg-muted dark:bg-muted-foreground/30 group-hover:bg-muted-foreground transition-colors" />
+          <div className="border-2 border-dashed border-muted dark:border-muted-foreground/20 rounded-[1.5rem] p-5 text-center text-muted-foreground dark:text-muted-foreground/70 text-sm font-medium italic bg-muted/30 dark:bg-muted/20">
             {t("futureEvents")}
           </div>
         </div>
