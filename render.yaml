@@ -17,10 +17,6 @@ services:
         sync: false # User must provide this in Render dashboard
       - key: JWT_SECRET_KEY
         generateValue: true
-      - key: PORT
-        value: 5001
-      - key: FLASK_ENV
-        value: production
 
   # Node.js Frontend + Express Server
   - type: web
@@ -36,8 +32,6 @@ services:
         value: production
       - key: BACKEND_URL # Using the public URL for 100% DNS reliability
         value: https://truecost-backend.onrender.com
-      - key: PORT
-        value: 5000
 
 databases:
   - name: truecost-db
