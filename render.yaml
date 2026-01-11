@@ -34,11 +34,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL # Guaranteed discovery via public URL
-        fromService:
-          type: web
-          name: truecost-backend
-          property: url
+      - key: BACKEND_URL # Using the public URL for 100% DNS reliability
+        value: https://truecost-backend.onrender.com
       - key: PORT
         value: 5000
 
