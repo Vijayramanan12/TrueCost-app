@@ -29,5 +29,5 @@ EXPOSE 5001
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 # Run the application with gunicorn for production
-# Use the PORT environment variable provided by Render
-CMD gunicorn --bind 0.0.0.0:$PORT app:app
+# Use shell form to ensure $PORT is expanded correctly
+CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 --timeout 120 app:app"
