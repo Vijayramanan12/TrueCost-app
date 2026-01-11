@@ -22,7 +22,7 @@ class UserProfile(db.Model):
     notifications = db.Column(db.String(20), default="On")
     privacy = db.Column(db.String(20), default="High")
     subscription = db.Column(db.String(20), default="Free")
-    account_id = db.Column(db.String(20), unique=True, nullable=True)
+    account_id = db.Column(db.String(20), unique=True, nullable=False)
 
 class Document(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)

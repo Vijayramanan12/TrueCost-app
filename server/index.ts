@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 const httpServer = createServer(app);
@@ -60,6 +61,20 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Proxy /api requests to the Python backend in production if configured
+  const backendUrl = process.env.BACKEND_URL;
+  if (process.env.NODE_ENV === "production" && backendUrl) {
+    log(`Proxying /api to ${backendUrl}`, "proxy");
+    app.use(
+      "/api",
+      createProxyMiddleware({
+        target: backendUrl,
+        changeOrigin: true,
+        secure: false, // For internal Render networking/self-signed certs
+      })
+    );
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

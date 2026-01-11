@@ -1,6 +1,7 @@
 flask
 flask-cors
 flask-sqlalchemy
+gunicorn
 flask-jwt-extended
 flask-bcrypt
 google-generativeai
@@ -10,4 +11,5 @@ pydantic
 pytest
 flask-executor
 pypdf
+psycopg2-binary
 email-validator

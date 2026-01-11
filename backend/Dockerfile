@@ -24,5 +24,5 @@ ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PORT=5001
 
-# Run the application
-CMD ["python", "app.py"]
+# Run the application with gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app"]
