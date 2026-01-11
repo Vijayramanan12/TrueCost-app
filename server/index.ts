@@ -66,8 +66,12 @@ export function log(message: string, source = "express") {
         secure: false,
         on: {
           error: (err, _req, res) => {
-            log(`Proxy Error: ${err.message}`, "proxy");
-            (res as Response).status(504).json({ message: "Gateway Timeout: Backend unreachable" });
+            log(`Proxy Error (${target}): ${err.message}`, "proxy");
+            (res as Response).status(504).json({
+              message: "Gateway Timeout: Backend unreachable",
+              target: target,
+              error: err.message
+            });
           }
         }
       })

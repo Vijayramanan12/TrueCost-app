@@ -32,11 +32,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL # Point this to the backend service URL
-        fromService:
-          type: web
-          name: truecost-backend
-          property: host
+      - key: BACKEND_URL # Internal hostname of the backend service
+        value: truecost-backend
       - key: PORT
         value: 5000
 

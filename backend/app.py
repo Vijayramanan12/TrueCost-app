@@ -649,5 +649,5 @@ with app.app_context():
     seed_data()
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 9002))
+    port = int(os.getenv("PORT", 5001))
     app.run(host='0.0.0.0', port=port, debug=True)
