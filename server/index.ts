@@ -56,7 +56,14 @@ export function log(message: string, source = "express") {
   // We do this BEFORE body parsing so the proxy receives the raw request stream
   const backendUrl = process.env.BACKEND_URL;
   if (process.env.NODE_ENV === "production" && backendUrl) {
-    const target = backendUrl.startsWith("http") ? backendUrl : `http://${backendUrl}:5001`;
+    log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
+    // If it already has a port (contains a colon) or starts with http, use it as is
+    // otherwise append the production default port 5001
+    let target = backendUrl;
+    if (!target.startsWith("http")) {
+      target = target.includes(":") ? `http://${target}` : `http://${target}:5001`;
+    }
+
     log(`Proxying /api to ${target}`, "proxy");
     app.use(
       "/api",
