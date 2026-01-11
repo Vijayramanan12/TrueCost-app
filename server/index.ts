@@ -57,11 +57,12 @@ export function log(message: string, source = "express") {
   const backendUrl = process.env.BACKEND_URL;
   if (process.env.NODE_ENV === "production" && backendUrl) {
     log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
-    // If it's a full URL already (starts with http), use it
-    // If it's just a hostname, use http:// + host + :5001
-    let target = backendUrl;
+    // If it's a full URL already (starts with http), use it exactly as provided
+    // Render's public 'url' includes https:// and the hostname.
+    let target = backendUrl.trim();
     if (!target.startsWith("http")) {
       target = `http://${target}`;
+      // Only add port 5001 if it's a naked hostname (no colon)
       if (!target.includes(":")) {
         target = `${target}:5001`;
       }
