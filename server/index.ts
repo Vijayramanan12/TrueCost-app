@@ -57,22 +57,23 @@ export function log(message: string, source = "express") {
 
   if (backendUrl) {
     log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
-    // Ensure the target has a protocol
     let target = backendUrl.trim();
     if (!target.startsWith("http")) {
       target = `http://${target}`;
-      if (!target.includes(":")) {
-        target = `${target}:5001`; // Default to 5001 for internal hosts
+      // default to 10000 if no port specified (Render's internal default)
+      if (!target.includes(":", target.indexOf("//") + 2)) {
+        target = `${target}:10000`;
       }
     }
 
     log(`Proxying /api to ${target}`, "proxy");
+    // We mount it directly on the app with a pathFilter to preserve the /api prefix
     app.use(
       createProxyMiddleware({
         pathFilter: "/api",
         target,
         changeOrigin: true,
-        secure: false,
+        secure: false, // Internal networking is usually http
         on: {
           error: (err, _req, res) => {
             log(`Proxy Error (${target}): ${err.message}`, "proxy");

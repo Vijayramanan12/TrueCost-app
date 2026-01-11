@@ -30,11 +30,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: BACKEND_URL # Dynamically link to the backend service's public URL
+      - key: BACKEND_URL # Internal hostname for faster, reliable service-to-service calls
         fromService:
           type: web
           name: truecost-backend
-          property: url
+          property: host
 
 databases:
   - name: truecost-db
