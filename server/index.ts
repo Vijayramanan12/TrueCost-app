@@ -72,8 +72,8 @@ export function log(message: string, source = "express") {
 
     log(`Proxying /api to ${target}`, "proxy");
     app.use(
-      "/api",
       createProxyMiddleware({
+        pathFilter: "/api",
         target,
         changeOrigin: true,
         secure: false,
