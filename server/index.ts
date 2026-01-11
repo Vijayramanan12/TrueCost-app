@@ -58,13 +58,16 @@ export function log(message: string, source = "express") {
   if (backendUrl) {
     log(`Raw BACKEND_URL: "${backendUrl}"`, "proxy");
     let target = backendUrl.trim();
+
+    // If it doesn't start with http, add the protocol and port
     if (!target.startsWith("http")) {
       target = `http://${target}`;
-      // default to 10000 if no port specified (Render's internal default)
+      // Only add port 10000 if no port is specified (for internal hosts)
       if (!target.includes(":", target.indexOf("//") + 2)) {
         target = `${target}:10000`;
       }
     }
+    // If it's already a full URL (https://...), use it as-is
 
     log(`Proxying /api to ${target}`, "proxy");
     // We mount it directly on the app with a pathFilter to preserve the /api prefix
@@ -73,7 +76,7 @@ export function log(message: string, source = "express") {
         pathFilter: "/api",
         target,
         changeOrigin: true,
-        secure: false, // Internal networking is usually http
+        secure: false, // Allow self-signed certs in dev
         on: {
           error: (err, _req, res) => {
             log(`Proxy Error (${target}): ${err.message}`, "proxy");
