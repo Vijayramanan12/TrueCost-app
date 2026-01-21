@@ -59,8 +59,14 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
             <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
-                <CardHeader className="text-center pt-8">
-                    <CardTitle className="text-3xl font-heading font-bold text-primary">TrueCost AI</CardTitle>
+                <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+                <CardHeader className="text-center pt-12 pb-2">
+                    <div className="flex flex-col items-center justify-center gap-4 mb-6">
+                        <div className="p-4 bg-primary/5 rounded-full ring-1 ring-primary/20">
+                            <img src="/favicon.png" alt="TrueCost Logo" className="h-24 w-24 rounded-full object-contain shadow-lg" />
+                        </div>
+                        <CardTitle className="text-4xl font-heading font-black text-primary tracking-tight">TrueCost AI</CardTitle>
+                    </div>
                     <p className="text-muted-foreground">
                         {isLogin ? t("signInAccount") : t("createAccount")}
                     </p>

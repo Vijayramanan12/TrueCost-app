@@ -11,8 +11,10 @@ import Timeline from "@/pages/Timeline";
 import LeaseScanner from "@/pages/LeaseScanner";
 import Profile from "@/pages/Profile";
 import LoanCalculator from "@/pages/LoanCalculator";
+import Chat from "@/pages/Chat";
 import Terms from "@/pages/Terms";
 import NotFound from "@/pages/not-found";
+import { ThemeProvider } from "@/components/theme-provider";
 
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import Login from "@/pages/Login";
@@ -42,6 +44,7 @@ function Router() {
       <Route path="/timeline" component={Timeline} />
       <Route path="/lease-scanner" component={LeaseScanner} />
       <Route path="/loan-calculator" component={LoanCalculator} />
+      <Route path="/chat" component={Chat} />
       <Route path="/profile" component={Profile} />
       <Route path="/terms" component={Terms} />
       <Route component={NotFound} />
@@ -51,6 +54,7 @@ function Router() {
 
 import { LanguageProvider } from "./lib/language-context";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 interface UserProfile {
   language: string;
@@ -61,18 +65,21 @@ function AppContent() {
     queryKey: ["/api/profile"],
     enabled: !!localStorage.getItem("auth_token"),
   });
+  const { user } = useAuth();
 
   return (
     <LanguageProvider initialLanguage={profile?.language || "English"}>
-      <TooltipProvider>
-        <WouterRouter>
-          <div className="min-h-screen bg-background pb-16">
-            <Router />
-            <MobileNav />
-          </div>
-          <Toaster />
-        </WouterRouter>
-      </TooltipProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <WouterRouter>
+            <div className="min-h-screen bg-background pb-16">
+              <Router />
+              {user && <MobileNav />}
+            </div>
+            <Toaster />
+          </WouterRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </LanguageProvider>
   );
 }

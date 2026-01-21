@@ -74,3 +74,17 @@ class EmailVerification(db.Model):
     otp = db.Column(db.String(6), nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ChatConversation(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), default="New Chat")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ChatMessage(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    conversation_id = db.Column(db.String(36), db.ForeignKey('chat_conversation.id'), nullable=False)
+    role = db.Column(db.String(20), nullable=False)  # 'user', 'assistant', 'system'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

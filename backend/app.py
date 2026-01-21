@@ -15,10 +15,11 @@ from email_validator import validate_email, EmailNotValidError
 import random
 import smtplib
 import dns.resolver
-from models import db, User, UserProfile, Document, Event, EmailVerification
+from models import db, User, UserProfile, Document, Event, EmailVerification, ChatConversation, ChatMessage
 from storage import storage
 from ai_util import analyze_rental_listing, scan_lease_agreement, analyze_bank_loan_terms, generate_loan_recommendations
 from loan_calculator import calculate_loan
+from chatbot_service import get_chatbot
 
 # Load environment variables
 load_dotenv()
@@ -40,6 +41,10 @@ if db_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'super-secret-key-change-this-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
@@ -253,6 +258,50 @@ def get_documents():
     user_id = get_jwt_identity()
     return jsonify(storage.get_documents(user_id))
 
+@app.route('/api/documents/search', methods=['POST'])
+@jwt_required()
+def search_documents():
+    """Semantic search across user's documents using RAG"""
+    try:
+        user_id = get_jwt_identity()
+        data = request.json or {}
+        query = data.get('query', '').strip()
+        top_k = data.get('top_k', 5)
+        doc_type = data.get('doc_type')
+        
+        if not query:
+            return jsonify({"message": "Query is required"}), 400
+        
+        from rag_service import get_rag_service
+        rag = get_rag_service()
+        
+        # Search documents
+        results = rag.search_documents(user_id, query, top_k, doc_type)
+        
+        return jsonify({
+            "query": query,
+            "results": results,
+            "count": len(results)
+        }), 200
+        
+    except Exception as e:
+        print(f"Search error: {e}")
+        return jsonify({"message": f"Search failed: {str(e)}"}), 500
+
+@app.route('/api/documents/stats', methods=['GET'])
+@jwt_required()
+def get_document_stats():
+    """Get RAG statistics for user's documents"""
+    try:
+        user_id = get_jwt_identity()
+        from rag_service import get_rag_service
+        rag = get_rag_service()
+        stats = rag.get_stats(user_id)
+        return jsonify(stats), 200
+    except Exception as e:
+        print(f"Stats error: {e}")
+        return jsonify({"message": f"Failed to get stats: {str(e)}"}), 500
+
 @app.route('/api/documents/upload', methods=['POST'])
 @jwt_required()
 def upload_document():
@@ -284,6 +333,10 @@ def upload_document():
         }
         doc = storage.create_document(user_id, doc_data)
         
+        # Extract text and add to RAG system for semantic search
+        if filename.lower().endswith('.pdf'):
+            executor.submit(add_document_to_rag, user_id, doc['id'], file_path, filename, doc_data['type'])
+        
         # Background task: analyze the file if it's a lease (demo of executor)
         if doc_data['type'] == 'legal':
             executor.submit(process_uploaded_lease, user_id, file_path)
@@ -301,10 +354,53 @@ def view_document(filename):
 @jwt_required()
 def delete_document(doc_id):
     user_id = get_jwt_identity()
+    
+    # Delete from RAG system
+    try:
+        from rag_service import get_rag_service
+        rag = get_rag_service()
+        rag.delete_document(user_id, doc_id)
+    except Exception as e:
+        print(f"Error deleting from RAG: {e}")
+    
+    # Delete from storage
     success = storage.delete_document(user_id, doc_id)
     if success:
         return jsonify({"message": "Document deleted"}), 200
     return jsonify({"message": "Document not found or unauthorized"}), 404
+
+def add_document_to_rag(user_id, doc_id, file_path, doc_name, doc_type):
+    """Background task to extract text and add document to RAG system"""
+    try:
+        print(f"📄 Adding document to RAG: {doc_name} (user: {user_id})")
+        
+        # Extract text from PDF
+        text_content = ""
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text_content += extracted + "\n"
+        
+        if not text_content or len(text_content.strip()) < 50:
+            print(f"⚠️ Insufficient text extracted from {doc_name}")
+            return
+        
+        # Add to RAG system
+        from rag_service import get_rag_service
+        rag = get_rag_service()
+        result = rag.add_document(
+            user_id=str(user_id),
+            doc_id=str(doc_id),
+            text=text_content,
+            doc_name=doc_name,
+            doc_type=doc_type
+        )
+        
+        print(f"✅ RAG indexing complete: {result['chunks_created']} chunks, {result['total_tokens']} tokens")
+        
+    except Exception as e:
+        print(f"❌ Error adding document to RAG: {e}")
 
 def process_uploaded_lease(user_id, file_path):
     """Background task to process lease (stub for real OCR)"""
@@ -623,7 +719,121 @@ def verify_email_real():
     except EmailNotValidError as e:
         return jsonify({"valid": False, "message": str(e)}), 400
 
+# ============= CHAT API =============
+
+@app.route('/api/chat/conversations', methods=['GET'])
+@jwt_required()
+def get_conversations():
+    """Get all conversations for the current user"""
+    user_id = get_jwt_identity()
+    conversations = storage.get_user_conversations(user_id)
+    return jsonify(conversations), 200
+
+@app.route('/api/chat/conversation/<conversation_id>', methods=['GET'])
+@jwt_required()
+def get_conversation(conversation_id):
+    """Get a specific conversation with all messages"""
+    user_id = get_jwt_identity()
+    conversation = storage.get_conversation(conversation_id, user_id)
+    if not conversation:
+        return jsonify({"message": "Conversation not found"}), 404
+    return jsonify(conversation), 200
+
+@app.route('/api/chat/conversation/new', methods=['POST'])
+@jwt_required()
+def create_conversation():
+    """Create a new conversation"""
+    user_id = get_jwt_identity()
+    data = request.json or {}
+    title = data.get('title', 'New Chat')
+    conversation = storage.create_conversation(user_id, title)
+    return jsonify(conversation), 201
+
+@app.route('/api/chat/conversation/<conversation_id>', methods=['DELETE'])
+@jwt_required()
+def delete_conversation(conversation_id):
+    """Delete a conversation"""
+    user_id = get_jwt_identity()
+    success = storage.delete_conversation(conversation_id, user_id)
+    if success:
+        return jsonify({"message": "Conversation deleted"}), 200
+    return jsonify({"message": "Conversation not found"}), 404
+
+@app.route('/api/chat/conversation/<conversation_id>/title', methods=['PUT'])
+@jwt_required()
+def update_conversation_title(conversation_id):
+    """Update conversation title"""
+    user_id = get_jwt_identity()
+    data = request.json or {}
+    title = data.get('title')
+    if not title:
+        return jsonify({"message": "Title is required"}), 400
+    
+    conversation = storage.update_conversation_title(conversation_id, user_id, title)
+    if conversation:
+        return jsonify(conversation), 200
+    return jsonify({"message": "Conversation not found"}), 404
+
+@app.route('/api/chat/send', methods=['POST'])
+@jwt_required()
+def send_message():
+    """Send a message and get AI response"""
+    try:
+        user_id = get_jwt_identity()
+        data = request.json or {}
+        
+        conversation_id = data.get('conversation_id')
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({"message": "Message is required"}), 400
+        
+        # Create new conversation if not provided
+        if not conversation_id:
+            conversation = storage.create_conversation(user_id, "New Chat")
+            conversation_id = conversation['id']
+        else:
+            # Verify conversation belongs to user
+            conv = storage.get_conversation(conversation_id, user_id)
+            if not conv:
+                return jsonify({"message": "Conversation not found"}), 404
+        
+        # Save user message
+        user_message = storage.add_chat_message(conversation_id, 'user', message)
+        
+        # Get conversation history for context
+        messages = storage.get_conversation_messages(conversation_id)
+        
+        # Get AI response
+        chatbot = get_chatbot()
+        ai_response = chatbot.chat(
+            message=message,
+            user_id=user_id,
+            conversation_history=messages
+        )
+        
+        # Save AI response
+        assistant_message = storage.add_chat_message(conversation_id, 'assistant', ai_response)
+        
+        # Auto-generate title from first message if still "New Chat"
+        conv = storage.get_conversation(conversation_id, user_id)
+        if conv and conv['title'] == 'New Chat' and len(messages) <= 2:
+            # Generate title from first user message (truncate if too long)
+            title = message[:50] + ('...' if len(message) > 50 else '')
+            storage.update_conversation_title(conversation_id, user_id, title)
+        
+        return jsonify({
+            "conversation_id": conversation_id,
+            "user_message": user_message,
+            "assistant_message": assistant_message
+        }), 200
+        
+    except Exception as e:
+        print(f"Chat error: {e}")
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+
 # ============= HEALTH CHECK =============
+
 
 @app.route('/', methods=['GET', 'HEAD'])
 def root():

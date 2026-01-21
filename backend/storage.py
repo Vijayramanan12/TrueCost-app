@@ -1,4 +1,4 @@
-from models import db, User, UserProfile, Document, Event, LeaseScan, LoanCalculation, EmailVerification
+from models import db, User, UserProfile, Document, Event, LeaseScan, LoanCalculation, EmailVerification, ChatConversation, ChatMessage
 import uuid
 from datetime import datetime, timedelta
 
@@ -281,6 +281,120 @@ class DBStorage:
             "notifications": p.notifications,
             "privacy": p.privacy,
             "subscription": p.subscription
+        }
+
+    # Chat methods
+    def create_conversation(self, user_id, title="New Chat"):
+        """Create a new chat conversation"""
+        conversation = ChatConversation(
+            user_id=user_id,
+            title=title
+        )
+        db.session.add(conversation)
+        db.session.commit()
+        return self._conversation_to_dict(conversation)
+
+    def get_user_conversations(self, user_id):
+        """Get all conversations for a user, ordered by most recent"""
+        conversations = ChatConversation.query.filter_by(user_id=user_id).order_by(
+            ChatConversation.updated_at.desc()
+        ).all()
+        return [self._conversation_to_dict(c) for c in conversations]
+
+    def get_conversation(self, conversation_id, user_id):
+        """Get a specific conversation with messages"""
+        conversation = ChatConversation.query.filter_by(
+            id=conversation_id,
+            user_id=user_id
+        ).first()
+        if not conversation:
+            return None
+        
+        conv_dict = self._conversation_to_dict(conversation)
+        messages = ChatMessage.query.filter_by(
+            conversation_id=conversation_id
+        ).order_by(ChatMessage.created_at.asc()).all()
+        conv_dict['messages'] = [self._message_to_dict(m) for m in messages]
+        return conv_dict
+
+    def add_chat_message(self, conversation_id, role, content):
+        """Add a message to a conversation"""
+        message = ChatMessage(
+            conversation_id=conversation_id,
+            role=role,
+            content=content
+        )
+        db.session.add(message)
+        
+        # Update conversation timestamp
+        conversation = ChatConversation.query.get(conversation_id)
+        if conversation:
+            conversation.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        return self._message_to_dict(message)
+
+    def update_conversation_title(self, conversation_id, user_id, title):
+        """Update conversation title"""
+        conversation = ChatConversation.query.filter_by(
+            id=conversation_id,
+            user_id=user_id
+        ).first()
+        if conversation:
+            conversation.title = title
+            db.session.commit()
+            return self._conversation_to_dict(conversation)
+        return None
+
+    def delete_conversation(self, conversation_id, user_id):
+        """Delete a conversation and all its messages"""
+        conversation = ChatConversation.query.filter_by(
+            id=conversation_id,
+            user_id=user_id
+        ).first()
+        if conversation:
+            ChatMessage.query.filter_by(conversation_id=conversation_id).delete()
+            db.session.delete(conversation)
+            db.session.commit()
+            return True
+        return False
+
+    def get_conversation_messages(self, conversation_id):
+        """Get all messages in a conversation"""
+        messages = ChatMessage.query.filter_by(
+            conversation_id=conversation_id
+        ).order_by(ChatMessage.created_at.asc()).all()
+        return [self._message_to_dict(m) for m in messages]
+
+    def get_daily_message_count(self, user_id):
+        """Count user messages sent in the last 24 hours"""
+        cutoff = datetime.utcnow() - timedelta(days=1)
+        # Join Conversation to filter by user_id
+        count = ChatMessage.query.join(ChatConversation).filter(
+            ChatConversation.user_id == user_id,
+            ChatMessage.role == 'user',
+            ChatMessage.created_at >= cutoff
+        ).count()
+        return count
+
+    def _conversation_to_dict(self, c):
+        """Convert conversation to dict"""
+        return {
+            "id": c.id,
+            "user_id": c.user_id,
+            "title": c.title,
+            "created_at": c.created_at.isoformat(),
+            "updated_at": c.updated_at.isoformat()
+        }
+
+    def _message_to_dict(self, m):
+        """Convert message to dict"""
+        return {
+            "id": m.id,
+            "conversation_id": m.conversation_id,
+            "role": m.role,
+            "content": m.content,
+            "created_at": m.created_at.isoformat()
         }
 
 storage = DBStorage()

@@ -156,3 +156,11 @@ instance/
 backend/instance/
 backend/uploads/
 uploads/
+
+# Android / Capacitor
+*.apk
+*.aab
+*.keystore
+android/app/build/
+android/.gradle
+

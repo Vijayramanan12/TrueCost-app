@@ -2,6 +2,15 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    if (res.status === 401) {
+      if (localStorage.getItem("auth_token")) {
+        // Only clear and redirect if we thought we were logged in
+        console.warn("Session expired. Logging out.");
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+        window.location.href = "/auth";
+      }
+    }
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -12,6 +21,10 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Use VITE_API_URL if defined (for mobile), otherwise fallback to relative path (proxy)
+  const baseUrl = import.meta.env.VITE_API_URL || "";
+  const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+
   const token = localStorage.getItem("auth_token");
   const isFormData = data instanceof FormData;
   const headers: Record<string, string> = {
@@ -19,7 +32,7 @@ export async function apiRequest(
     ...(token ? { "Authorization": `Bearer ${token}` } : {}),
   };
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: isFormData ? (data as FormData) : (data ? JSON.stringify(data) : undefined),
@@ -41,7 +54,11 @@ export const getQueryFn: <T>(options: {
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       };
 
-      const res = await fetch(queryKey.join("/") as string, {
+      const url = queryKey.join("/");
+      const baseUrl = import.meta.env.VITE_API_URL || "";
+      const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+
+      const res = await fetch(fullUrl, {
         credentials: "include",
         headers,
       });

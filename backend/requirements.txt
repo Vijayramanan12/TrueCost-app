@@ -13,3 +13,10 @@ flask-executor
 pypdf
 psycopg2-binary
 email-validator
+langchain
+langchain-groq
+langchain-community
+chromadb
+sentence-transformers
+langchain-chroma
+tiktoken

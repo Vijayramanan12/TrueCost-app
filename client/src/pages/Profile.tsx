@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
 import {
   User, Mail, Shield, Bell, CreditCard, LogOut, ChevronRight,
   Settings, Languages, Check, Loader2, Sparkles, Smartphone,
@@ -56,7 +57,7 @@ export default function Profile() {
   const [highSecurityAlerts, setHighSecurityAlerts] = useState(true);
   const [appUpdates, setAppUpdates] = useState(true);
   const [localProcessing, setLocalProcessing] = useState(true);
-  const [theme, setTheme] = useState("system"); // light, dark, system
+  const { theme, setTheme } = useTheme();
   const [emailStatus, setEmailStatus] = useState<"verified" | "sending" | "sent" | "unverified">("unverified");
 
   const [otpOpen, setOtpOpen] = useState(false);
@@ -109,19 +110,6 @@ export default function Profile() {
   const handleConfirmVerify = () => {
     setOtpOpen(true);
   };
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-  }, [theme]);
 
   const { data: profile, isLoading } = useQuery<UserProfile>({
     queryKey: ["/api/profile"],
@@ -453,34 +441,18 @@ export default function Profile() {
             </DialogContent>
           </Dialog>
 
-          {/* Subscription */}
-          <Dialog open={subscriptionOpen} onOpenChange={setSubscriptionOpen}>
-            <DialogTrigger asChild>
-              <div onClick={() => setSubscriptionOpen(true)} className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  <span className="font-medium text-sm">{t("subscription")}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{profile?.subscription || "Free"}</span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </div>
+          {/* Sponsored (Ad-supported) */}
+          <div className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors cursor-default opacity-80">
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                <Sparkles className="w-4 h-4" />
               </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-[340px] rounded-3xl">
-              <DialogHeader><DialogTitle>{t("yourPlan")}</DialogTitle></DialogHeader>
-              <div className="p-6 bg-primary/5 rounded-2xl border border-primary/20 text-center relative overflow-hidden">
-                <Sparkles className="w-12 h-12 text-primary/10 absolute -top-2 -right-2 rotate-12" />
-                <h4 className="text-2xl font-heading font-black text-primary mb-1 uppercase tracking-tighter">
-                  {profile?.subscription || t("freeEdition")}
-                </h4>
-                <p className="text-xs text-muted-foreground mb-4">Unlimited lease scans & vault storage</p>
-                <Button className="w-full rounded-xl">Check for Upgrades</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              <span className="font-medium text-sm">Plan</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Ad-Supported (Free)</span>
+            </div>
+          </div>
 
         </div>
 

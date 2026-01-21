@@ -1,10 +1,11 @@
-import { Home, Calculator, Shield, Calendar, Search, MapPin, Zap, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Home, Calculator, Shield, Calendar, Search, MapPin, Zap, AlertTriangle, CheckCircle, Clock, MessageSquare } from "lucide-react";
 
 export const NAV_ITEMS = [
   { label: "Home", icon: Home, path: "/" },
   { label: "Calculator", icon: Calculator, path: "/calculator" },
   { label: "Timeline", icon: Calendar, path: "/timeline" },
   { label: "Vault", icon: Shield, path: "/vault" },
+  { label: "Chat", icon: MessageSquare, path: "/chat" },
 ];
 
 export const MOCK_COST_BREAKDOWN = {
