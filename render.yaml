@@ -17,7 +17,7 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.11.0"
 
   # Node.js Frontend + Express Server
   - type: web
