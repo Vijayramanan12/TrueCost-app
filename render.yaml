@@ -2,19 +2,22 @@ services:
   # Python Backend Service
   - type: web
     name: truecost-backend
-    env: docker
-    dockerContext: backend
-    dockerfilePath: backend/Dockerfile
+    env: python
     plan: free
     region: oregon
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 180 --log-level debug app:app
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        sync: false # User will provide Supabase URI manually in dashboard
+        sync: false # Set this manually in Render Dashboard to your Supabase URI
       - key: GROQ_API_KEY
-        sync: false # User must provide this in Render dashboard
+        sync: false # Set this manually in Render Dashboard
       - key: JWT_SECRET_KEY
         generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
 
   # Node.js Frontend + Express Server
   - type: web
@@ -30,8 +33,3 @@ services:
         value: production
       - key: BACKEND_URL
         value: https://truecost-backend.onrender.com
-
-databases:
-  - name: truecost-db
-    plan: free
-    region: oregon
