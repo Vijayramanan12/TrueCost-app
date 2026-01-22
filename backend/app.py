@@ -11,6 +11,12 @@ from dotenv import load_dotenv
 import re
 from pypdf import PdfReader
 from email_validator import validate_email, EmailNotValidError
+import logging
+
+# Set up logging early
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("🚀 Starting TrueCost Backend...")
 
 import random
 import smtplib

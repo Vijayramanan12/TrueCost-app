@@ -21,3 +21,4 @@ chromadb
 sentence-transformers
 langchain-chroma
 tiktoken
+dnspython
