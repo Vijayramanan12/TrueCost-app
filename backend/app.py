@@ -858,9 +858,12 @@ def seed_data():
         storage.create_event(user.id, {"title": "Rent Due", "date": "2024-03-01", "type": "payment", "status": "upcoming"})
         print("✅ Seeding complete.")
 
-with app.app_context():
-    db.create_all()
-    seed_data()
+try:
+    with app.app_context():
+        db.create_all()
+        seed_data()
+except Exception as e:
+    print(f"⚠️ Database initialization skipped or failed: {e}")
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5001))
