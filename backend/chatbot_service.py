@@ -6,10 +6,10 @@ Uses Groq LLM with ReAct agent pattern for financial advice and analysis
 import os
 from typing import List, Dict, Any
 from langchain_groq import ChatGroq
-from langchain_classic.agents import AgentExecutor, create_react_agent
-from langchain_classic.tools import Tool
-from langchain_classic.prompts import PromptTemplate
-from langchain_classic.memory import ConversationBufferWindowMemory
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain.tools import Tool
+from langchain.prompts import PromptTemplate
+from langchain.memory import ConversationBufferWindowMemory
 from chat_tools import ChatTools
 import json
 

@@ -38,10 +38,8 @@ class RAGService:
             )
         )
         
-        # Initialize embedding model (all-MiniLM-L6-v2: fast, lightweight, good quality)
-        print("📦 Loading embedding model...")
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        print("✅ Embedding model loaded")
+        # Lazy initialize embedding model to save memory during boot
+        self._embedding_model = None
         
         # Get or create collection for documents
         self.collection = self.client.get_or_create_collection(
@@ -52,6 +50,15 @@ class RAGService:
         # Get chunker instance
         self.chunker = get_chunker()
     
+    @property
+    def embedding_model(self):
+        """Lazy load the embedding model only when needed"""
+        if self._embedding_model is None:
+            print("📦 Loading embedding model (lazy mode)...")
+            self._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            print("✅ Embedding model loaded")
+        return self._embedding_model
+
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding vector for text"""
         embedding = self.embedding_model.encode(text, show_progress_bar=False)
