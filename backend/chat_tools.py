@@ -1,5 +1,8 @@
 from typing import List
-from langchain.tools import Tool
+try:
+    from langchain.tools import Tool
+except ImportError:
+    from langchain.tools.base import Tool
 from loan_calculator import calculate_loan
 from storage import storage
 from ai_util import (

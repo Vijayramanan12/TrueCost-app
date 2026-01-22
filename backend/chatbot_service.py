@@ -4,11 +4,26 @@ Uses Groq LLM with ReAct agent pattern for financial advice and analysis
 """
 
 import os
+import logging
 from typing import List, Dict, Any
-from langchain_groq import ChatGroq
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain.tools import Tool
-from langchain.prompts import PromptTemplate
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+try:
+    from langchain_groq import ChatGroq
+    from langchain.agents import AgentExecutor, create_react_agent
+    from langchain.tools import Tool
+    from langchain.prompts import PromptTemplate
+except ImportError as e:
+    logger.error(f"❌ LangChain/Groq Import Error: {e}")
+    # Direct fallback paths
+    from langchain_groq.chat_models import ChatGroq
+    from langchain.agents.agent_executor import AgentExecutor
+    from langchain.agents.react.base import create_react_agent
+    from langchain.tools.base import Tool
+    from langchain.prompts.prompt import PromptTemplate
+
 from langchain.memory import ConversationBufferWindowMemory
 from chat_tools import ChatTools
 import json
