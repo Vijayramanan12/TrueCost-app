@@ -153,7 +153,6 @@ export default function Chat() {
                 >
                     {isSidebarOpen ? <ArrowLeft className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
                 </Button>
-                </Button>
                 <div className="flex items-center gap-3 flex-1 justify-center mr-8">
                     <img src="/favicon.png" alt="TrueCost Logo" className="h-9 w-9 rounded-full object-contain shadow-sm ring-1 ring-border/50" />
                     <h1 className="text-lg font-bold truncate bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">TrueCost AI</h1>
