@@ -1,5 +1,5 @@
 from typing import List
-from langchain_classic.tools import Tool
+from langchain.tools import Tool
 from loan_calculator import calculate_loan
 from storage import storage
 from ai_util import (

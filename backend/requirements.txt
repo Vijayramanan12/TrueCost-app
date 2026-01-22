@@ -16,6 +16,7 @@ email-validator
 langchain
 langchain-groq
 langchain-community
+langchain-core
 chromadb
 sentence-transformers
 langchain-chroma
