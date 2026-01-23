@@ -383,8 +383,8 @@ class DBStorage:
             "id": c.id,
             "user_id": c.user_id,
             "title": c.title,
-            "created_at": c.created_at.isoformat(),
-            "updated_at": c.updated_at.isoformat()
+            "created_at": c.created_at.isoformat() if c.created_at else datetime.utcnow().isoformat(),
+            "updated_at": c.updated_at.isoformat() if c.updated_at else datetime.utcnow().isoformat()
         }
 
     def _message_to_dict(self, m):
@@ -394,7 +394,7 @@ class DBStorage:
             "conversation_id": m.conversation_id,
             "role": m.role,
             "content": m.content,
-            "created_at": m.created_at.isoformat()
+            "created_at": m.created_at.isoformat() if m.created_at else datetime.utcnow().isoformat()
         }
 
 storage = DBStorage()

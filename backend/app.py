@@ -79,11 +79,19 @@ def bad_request(e):
 
 @app.errorhandler(404)
 def not_found(e):
+    logger.warning(f"🚩 404 Not Found: {request.method} {request.path}")
     return jsonify(error=str(e), message="Resource Not Found"), 404
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify(error="Internal Server Error", message="Something went wrong on our end"), 500
+    import traceback
+    error_trace = traceback.format_exc()
+    logger.error(f"❌ 500 Internal Server Error!\n{error_trace}")
+    return jsonify(
+        error="Internal Server Error", 
+        message="Something went wrong on our end. Please check the server logs.",
+        traceback=error_trace if os.getenv('FLASK_ENV') == 'development' else None
+    ), 500
 
 # ============= AUTH API =============
 
@@ -736,9 +744,15 @@ def verify_email_real():
 @jwt_required()
 def get_conversations():
     """Get all conversations for the current user"""
-    user_id = get_jwt_identity()
-    conversations = storage.get_user_conversations(user_id)
-    return jsonify(conversations), 200
+    try:
+        user_id = get_jwt_identity()
+        conversations = storage.get_user_conversations(user_id)
+        return jsonify(conversations), 200
+    except Exception as e:
+        logger.error(f"❌ Error fetching conversations: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"message": f"Database error: {str(e)}"}), 500
 
 @app.route('/api/chat/conversation/<conversation_id>', methods=['GET'])
 @jwt_required()
@@ -871,10 +885,14 @@ def seed_data():
 
 try:
     with app.app_context():
+        logger.info("🛠️ Initializing database tables...")
         db.create_all()
+        logger.info("✅ Database tables confirmed/created.")
         seed_data()
 except Exception as e:
-    print(f"⚠️ Database initialization skipped or failed: {e}")
+    logger.error(f"❌ Database initialization FAILED: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5001))
