@@ -746,13 +746,15 @@ def get_conversations():
     """Get all conversations for the current user"""
     try:
         user_id = get_jwt_identity()
+        logger.info(f"📬 Fetching conversations for user: {user_id}")
         conversations = storage.get_user_conversations(user_id)
+        logger.info(f"✅ Found {len(conversations)} conversations")
         return jsonify(conversations), 200
     except Exception as e:
-        logger.error(f"❌ Error fetching conversations: {e}")
+        logger.error(f"❌ Error in get_conversations: {e}")
         import traceback
         logger.error(traceback.format_exc())
-        return jsonify({"message": f"Database error: {str(e)}"}), 500
+        return jsonify({"message": f"Server Error: {str(e)}"}), 500
 
 @app.route('/api/chat/conversation/<conversation_id>', methods=['GET'])
 @jwt_required()
@@ -887,6 +889,22 @@ try:
     with app.app_context():
         logger.info("🛠️ Initializing database tables...")
         db.create_all()
+        
+        # Check for missing columns in existing database
+        try:
+            from sqlalchemy import text
+            # Ensure ChatConversation has updated_at
+            db.session.execute(text('SELECT updated_at FROM chat_conversation LIMIT 1'))
+        except Exception:
+            logger.warning("⚠️ Column 'updated_at' missing in chat_conversation. Attempting patch...")
+            try:
+                db.session.execute(text('ALTER TABLE chat_conversation ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'))
+                db.session.commit()
+                logger.info("✅ Column 'updated_at' added successfully.")
+            except Exception as e:
+                logger.error(f"❌ Column patch failed: {e}")
+                db.session.rollback()
+
         logger.info("✅ Database tables confirmed/created.")
         seed_data()
 except Exception as e:

@@ -10,16 +10,37 @@ from typing import List, Dict, Any
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Standard LangChain 0.2+ imports
+# Ultra-robust LangChain imports
 try:
-    from langchain.agents import AgentExecutor, create_react_agent
+    # 1. Try standard public API
+    try:
+        from langchain.agents import AgentExecutor, create_react_agent
+    except (ImportError, AttributeError):
+        # 2. Try specific submodules if public API fails
+        try:
+            from langchain.agents.agent_executor import AgentExecutor
+        except ImportError:
+            AgentExecutor = None
+            
+        try:
+            from langchain.agents.react.base import create_react_agent
+        except ImportError:
+            try:
+                from langchain.agents.react.agent import create_react_agent
+            except ImportError:
+                create_react_agent = None
+
     from langchain_core.tools import Tool
     from langchain_core.prompts import PromptTemplate
     from langchain_groq import ChatGroq
-    logger.info("✅ LangChain 0.2+ imports successful")
-except ImportError as e:
-    logger.error(f"❌ LangChain core imports failed: {e}")
-    # Fallback/Placeholder to avoid boot crash, though bot will fail if called
+    
+    if AgentExecutor and create_react_agent:
+        logger.info("✅ LangChain components imported successfully")
+    else:
+        logger.warning("⚠️ Some LangChain components are missing; agent reasoning will be offline.")
+        
+except Exception as e:
+    logger.error(f"❌ LangChain import failure: {e}")
     AgentExecutor = None
     create_react_agent = None
     Tool = object 
@@ -102,21 +123,29 @@ Thought: {agent_scratchpad}"""
             input_variables=["input", "agent_scratchpad", "tools", "tool_names", "chat_history"]
         )
     
-    def create_agent(self, chat_history_str: str = "") -> AgentExecutor:
+    def create_agent(self, chat_history_str: str = "") -> Any:
         """Create a new agent instance"""
-        agent = create_react_agent(
-            llm=self.llm,
-            tools=self.tools,
-            prompt=self.agent_prompt
-        )
-        
-        return AgentExecutor(
-            agent=agent,
-            tools=self.tools,
-            verbose=True,
-            max_iterations=5,
-            handle_parsing_errors=True
-        )
+        if not AgentExecutor or not create_react_agent:
+            logger.error("🛑 Cannot create agent: LangChain components missing")
+            return None
+
+        try:
+            agent = create_react_agent(
+                llm=self.llm,
+                tools=self.tools,
+                prompt=self.agent_prompt
+            )
+            
+            return AgentExecutor(
+                agent=agent,
+                tools=self.tools,
+                verbose=True,
+                max_iterations=5,
+                handle_parsing_errors=True
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize AgentExecutor: {e}")
+            return None
     
     def chat(self, message: str, user_id: str = None, conversation_history: List[Dict] = None) -> str:
         """
@@ -141,6 +170,8 @@ Thought: {agent_scratchpad}"""
             
             # Create agent executor
             agent_executor = self.create_agent()
+            if not agent_executor:
+                return "I'm currently having trouble connecting to my reasoning engine. Please try again in a moment."
             
             # Prepare input with user_id context
             user_context = f"[User ID: {user_id}] " if user_id else ""
