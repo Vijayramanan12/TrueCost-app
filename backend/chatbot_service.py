@@ -10,32 +10,21 @@ from typing import List, Dict, Any
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ultra-resilient LangChain imports
+# Standard LangChain 0.2+ imports
 try:
-    # 1. Try modern 0.2.x paths
     from langchain.agents import AgentExecutor, create_react_agent
-    from langchain.tools import Tool
-    from langchain.prompts import PromptTemplate
+    from langchain_core.tools import Tool
+    from langchain_core.prompts import PromptTemplate
     from langchain_groq import ChatGroq
     logger.info("✅ LangChain 0.2+ imports successful")
 except ImportError as e:
-    logger.warning(f"⚠️ Primary import failed, trying fallbacks: {e}")
-    try:
-        # 2. Try 0.1.x fallback paths
-        from langchain.agents.agent_executor import AgentExecutor
-        from langchain.agents.loading import load_agent
-        from langchain_core.tools import Tool
-        from langchain_core.prompts import PromptTemplate
-        from langchain_groq import ChatGroq
-        # Note: create_react_agent might need a different import in 0.1
-        from langchain.agents import create_react_agent 
-        logger.info("✅ LangChain fallback imports successful")
-    except Exception as e2:
-        logger.error(f"❌ All LangChain imports failed: {e2}")
-        # Final emergency bridge
-        AgentExecutor = None
-        create_react_agent = None
-
+    logger.error(f"❌ LangChain core imports failed: {e}")
+    # Fallback/Placeholder to avoid boot crash, though bot will fail if called
+    AgentExecutor = None
+    create_react_agent = None
+    Tool = object 
+    PromptTemplate = None
+    ChatGroq = None
 
 from chat_tools import ChatTools
 import json
