@@ -36,7 +36,7 @@ except ImportError as e:
         AgentExecutor = None
         create_react_agent = None
 
-from langchain.memory import ConversationBufferWindowMemory
+
 from chat_tools import ChatTools
 import json
 
