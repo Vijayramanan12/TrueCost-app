@@ -7,7 +7,6 @@ import os
 from typing import List, Dict, Optional
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 from chunking_util import get_chunker
 import uuid
 
@@ -55,6 +54,7 @@ class RAGService:
         """Lazy load the embedding model only when needed"""
         if self._embedding_model is None:
             print("📦 Loading embedding model (lazy mode)...")
+            from sentence_transformers import SentenceTransformer
             self._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
             print("✅ Embedding model loaded")
         return self._embedding_model

@@ -4,7 +4,6 @@ flask-sqlalchemy
 gunicorn
 flask-jwt-extended
 flask-bcrypt
-google-generativeai
 groq
 python-dotenv
 pydantic

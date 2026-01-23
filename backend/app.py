@@ -1,3 +1,15 @@
+import os
+import logging
+from dotenv import load_dotenv
+
+# Load environment variables FIRST
+load_dotenv()
+
+# Set up logging early
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info("🚀 Starting TrueCost Backend...")
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -5,18 +17,10 @@ from flask_bcrypt import Bcrypt
 from flask_executor import Executor
 from werkzeug.utils import secure_filename
 import time
-import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import re
 from pypdf import PdfReader
 from email_validator import validate_email, EmailNotValidError
-import logging
-
-# Set up logging early
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-logger.info("🚀 Starting TrueCost Backend...")
 
 import random
 import smtplib
@@ -26,9 +30,6 @@ from storage import storage
 from ai_util import analyze_rental_listing, scan_lease_agreement, analyze_bank_loan_terms, generate_loan_recommendations
 from loan_calculator import calculate_loan
 from chatbot_service import get_chatbot
-
-# Load environment variables
-load_dotenv()
 
 app = Flask(__name__)
 
@@ -41,7 +42,9 @@ executor = Executor(app)
 # Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_url = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'truecost.db'))
+
 # SQLAlchemy 1.4+ requires 'postgresql://' prefix instead of 'postgres://'
+# AND handle Render/Supabase SSL requirements
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
@@ -50,6 +53,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "pool_pre_ping": True,
     "pool_recycle": 300,
+    # Add SSL for production PostgreSQL (Render/Supabase)
+    "connect_args": {"sslmode": "require"} if db_url.startswith("postgresql") else {}
 }
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'super-secret-key-change-this-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
