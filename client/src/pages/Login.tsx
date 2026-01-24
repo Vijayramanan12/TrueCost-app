@@ -89,7 +89,7 @@ export default function Login() {
                                             <Input
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
-                                                placeholder="Arjun Kumar"
+                                                placeholder="vijay"
                                                 className="rounded-xl h-12 bg-muted/30 border-none focus-visible:ring-1"
                                                 required
                                             />
