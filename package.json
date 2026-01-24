@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start:dev": "concurrently \"cd backend && python3 app.py\" \"npm run dev:client\"",
     "dev:client": "vite dev",
