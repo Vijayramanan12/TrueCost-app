@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python311", "python311Packages.pip", "gcc", "postgresql"]
-
-[phases.install]
-cmds = ["python3 -m pip install -r backend/requirements.txt"]
-
-[start]
-cmd = "cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 180 --log-level debug app:app"
