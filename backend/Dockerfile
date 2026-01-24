@@ -1,7 +1,9 @@
 FROM python:3.11-slim
 
 WORKDIR /app
-ENV REBUILD_AT=2026-01-24T19:50:00
+
+# Force a cold rebuild with a new timestamp
+ENV REBUILD_TIMESTAMP=2026-01-24T20:30:00
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -9,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Use root-relative paths for COPY because Railway uses the repo root as context
-COPY backend/requirements.txt .
+# Copy new requirements file and install
+COPY backend/reqs.txt ./requirements.txt
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
