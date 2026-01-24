@@ -10,37 +10,39 @@ from typing import List, Dict, Any
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ultra-robust LangChain imports
+# Ultra-robust direct imports for LangChain
 try:
-    # 1. Try standard public API
+    import langchain
+    logger.info(f"⚙️ LangChain version: {getattr(langchain, '__version__', 'unknown')}")
+    
+    # Try direct submodule imports which are more stable across 0.2/0.3
     try:
-        from langchain.agents import AgentExecutor, create_react_agent
-    except (ImportError, AttributeError):
-        # 2. Try specific submodules if public API fails
+        from langchain.agents.agent_executor import AgentExecutor
+    except ImportError:
         try:
-            from langchain.agents.agent_executor import AgentExecutor
+            from langchain.agents import AgentExecutor
         except ImportError:
             AgentExecutor = None
             
+    try:
+        from langchain.agents.react.base import create_react_agent
+    except ImportError:
         try:
-            from langchain.agents.react.base import create_react_agent
+            from langchain.agents import create_react_agent
         except ImportError:
-            try:
-                from langchain.agents.react.agent import create_react_agent
-            except ImportError:
-                create_react_agent = None
+            create_react_agent = None
 
     from langchain_core.tools import Tool
     from langchain_core.prompts import PromptTemplate
     from langchain_groq import ChatGroq
     
     if AgentExecutor and create_react_agent:
-        logger.info("✅ LangChain components imported successfully")
+        logger.info("✅ LangChain modules loaded via direct paths")
     else:
-        logger.warning("⚠️ Some LangChain components are missing; agent reasoning will be offline.")
+        logger.error(f"❌ Missing: AgentExecutor={bool(AgentExecutor)}, create_react_agent={bool(create_react_agent)}")
         
 except Exception as e:
-    logger.error(f"❌ LangChain import failure: {e}")
+    logger.error(f"❌ LangChain core boot failure: {e}")
     AgentExecutor = None
     create_react_agent = None
     Tool = object 
