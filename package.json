@@ -122,6 +122,6 @@
     "drizzle-kit": "^0.31.4"
   },
   "optionalDependencies": {
-    "bufferutil": "^4.0.8"
+    "bufferutil": "4.0.8"
   }
 }
