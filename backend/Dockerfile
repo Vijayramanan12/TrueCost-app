@@ -1,6 +1,7 @@
 FROM python:3.11-slim
 
 WORKDIR /app
+ENV REBUILD_AT=2026-01-24T19:50:00
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
