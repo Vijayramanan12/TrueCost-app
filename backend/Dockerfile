@@ -8,13 +8,13 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt .
+# Use root-relative paths for COPY because Railway uses the repo root as context
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the backend files
-COPY . .
+COPY backend/ .
 
 # Ensure the upload directory exists
 RUN mkdir -p uploads
