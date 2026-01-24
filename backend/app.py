@@ -856,8 +856,13 @@ def send_message():
         }), 200
         
     except Exception as e:
-        print(f"Chat error: {e}")
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f"❌ Chat routing error for user {user_id}: {e}\n{error_trace}")
+        return jsonify({
+            "message": f"An error occurred: {str(e)}",
+            "debug_trace": error_trace if os.getenv('FLASK_ENV') == 'development' else None
+        }), 500
 
 # ============= HEALTH CHECK =============
 

@@ -57,7 +57,10 @@ class TrueCostChatbot:
         """Initialize the chatbot with Groq LLM and custom tools"""
         api_key = groq_api_key or os.getenv('GROQ_API_KEY')
         if not api_key:
+            logger.error("❌ GROQ_API_KEY not found in environment!")
             raise ValueError("GROQ_API_KEY not found in environment")
+        
+        logger.info("🔑 GROQ_API_KEY detected.")
         
         # Initialize Groq LLM
         self.llm = ChatGroq(
@@ -169,6 +172,8 @@ Thought: {agent_scratchpad}"""
                 for msg in recent_history:
                     role = "User" if msg['role'] == 'user' else "AI"
                     context += f"{role}: {msg['content']}\n"
+            
+            logger.info(f"🤖 Generating AI response for user {user_id}...")
             
             # Create agent executor
             agent_executor = self.create_agent()

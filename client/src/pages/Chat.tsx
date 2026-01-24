@@ -1,62 +1,43 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatService } from '@/services/chatService';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, MessageSquare, Sparkles, Check } from 'lucide-react';
+import { ArrowLeft, MessageSquare } from 'lucide-react';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { MessageList } from '@/components/chat/MessageList';
 import { ChatInput } from '@/components/chat/ChatInput';
-import { motion } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from 'framer-motion';
 import { AdBanner } from "@/components/ui/ad-banner";
 import { useChatStore } from '@/stores/chatStore';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 export default function Chat() {
     const {
-        conversations,
         selectedConversationId,
         isSidebarOpen,
-        setConversations,
         setSelectedConversationId,
         setIsSidebarOpen,
-        setIsLoading,
         setError,
-        messages,
-        addMessage,
-        setMessages,
     } = useChatStore();
 
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
-    // Fetch conversations list
-    const { data: conversationsData = [], isLoading: conversationsLoading } = useQuery({
+    // Fetch conversations list directly - NO syncing to store
+    const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
         queryKey: ['chat-conversations'],
         queryFn: chatService.getConversations,
     });
 
-    // Sync conversations to store
-    useEffect(() => {
-        if (conversationsData) {
-            setConversations(conversationsData);
-        }
-    }, [conversationsData, setConversations]);
-
-    // Fetch selected conversation messages
+    // Fetch selected conversation messages directly - NO syncing to store
     const { data: currentConversation, isLoading: conversationLoading } = useQuery({
         queryKey: ['chat-conversation', selectedConversationId],
         queryFn: () => chatService.getConversation(selectedConversationId!),
         enabled: !!selectedConversationId,
     });
 
-    // Sync messages to store
-    useEffect(() => {
-        if (currentConversation?.messages) {
-            setMessages(currentConversation.messages);
-        }
-    }, [currentConversation, setMessages]);
+    const currentMessages = currentConversation?.messages || [];
 
     // Send message mutation
     const sendMessageMutation = useMutation({
@@ -68,9 +49,6 @@ export default function Chat() {
             if (!selectedConversationId) {
                 setSelectedConversationId(data.conversation_id);
             }
-            // Optimistically add messages to store
-            if (data.user_message) addMessage(data.user_message);
-            if (data.assistant_message) addMessage(data.assistant_message);
         },
         onError: (error: any) => {
             setError(error.message || 'Failed to send message');
@@ -88,7 +66,6 @@ export default function Chat() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
             setSelectedConversationId(null);
-            setMessages([]);
             toast({
                 title: 'Success',
                 description: 'Conversation deleted',
@@ -120,11 +97,12 @@ export default function Chat() {
         if (window.innerWidth < 768) setIsSidebarOpen(false);
     };
 
-    // Keyboard shortcuts
-    useKeyboardShortcuts({
+    const shortcuts = useMemo(() => ({
         'ctrl+n': handleNewChat,
         'ctrl+k': () => setIsSidebarOpen(!isSidebarOpen),
-    });
+    }), [isSidebarOpen, handleNewChat, setIsSidebarOpen]);
+
+    useKeyboardShortcuts(shortcuts);
 
     // Auto-select first conversation on mobile logic (optional, kept from original)
     useEffect(() => {
@@ -133,12 +111,11 @@ export default function Chat() {
         }
     }, [conversations, selectedConversationId]);
 
-    const currentMessages = selectedConversationId ? (currentConversation?.messages || []) : [];
     const isLoading = sendMessageMutation.isPending;
 
     return (
         <div
-            className="h-screen h-[100dvh] flex flex-col bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden relative"
+            className="h-[calc(100vh-64px)] md:h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden relative"
             role="main"
             aria-label="Chat interface"
         >

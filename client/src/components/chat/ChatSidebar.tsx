@@ -51,7 +51,7 @@ export function ChatSidebar({
                     <div className="flex items-center justify-center p-8">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
-                ) : conversations.length === 0 ? (
+                ) : !Array.isArray(conversations) || conversations.length === 0 ? (
                     <div className="p-6 text-center text-sm text-muted-foreground flex flex-col items-center gap-2 mt-8">
                         <MessageSquare className="h-8 w-8 opacity-20" />
                         <p>No conversations yet.</p>

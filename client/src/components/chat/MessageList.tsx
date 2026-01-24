@@ -29,7 +29,7 @@ export function MessageList({ messages, isLoading, conversationLoading }: Messag
         );
     }
 
-    if (messages.length === 0) {
+    if (!Array.isArray(messages) || messages.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 text-muted-foreground relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>

@@ -8,6 +8,8 @@
     "dev:client": "vite dev",
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build:client": "vite build",
+    "build:mobile": "cross-env VITE_API_URL=https://YOUR_RAILWAY_URL vite build && npx cap sync android",
+    "build:web": "vite build",
     "build": "vite build && tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",

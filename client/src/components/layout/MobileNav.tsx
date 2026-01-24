@@ -27,44 +27,45 @@ export function MobileNav() {
         {NAV_ITEMS.map((item) => {
           const isActive = location === item.path;
           return (
-            <Link key={item.path} href={item.path}>
-              <a className={cn(
+            <Link
+              key={item.path}
+              href={item.path}
+              className={cn(
                 "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-primary/70"
-              )}>
-                <div className="relative">
-                  <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5px]")} />
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-indicator"
-                      className="absolute -bottom-2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"
-                    />
-                  )}
-                </div>
-                <span className="text-[10px] font-medium mt-1">{t(getTranslationKey(item.label))}</span>
-              </a>
+              )}
+            >
+              <div className="relative">
+                <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5px]")} />
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute -bottom-2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"
+                  />
+                )}
+              </div>
+              <span className="text-[10px] font-medium mt-1">{t(getTranslationKey(item.label))}</span>
             </Link>
           );
         })}
-        <Link href="/profile">
-          <a
-            className={cn(
-              "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200",
-              location === "/profile" ? "text-primary" : "text-muted-foreground hover:text-primary/70"
+        <Link
+          href="/profile"
+          className={cn(
+            "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200",
+            location === "/profile" ? "text-primary" : "text-muted-foreground hover:text-primary/70"
+          )}
+          data-testid="link-profile"
+        >
+          <div className="relative">
+            <User className={cn("w-6 h-6", location === "/profile" && "stroke-[2.5px]")} />
+            {location === "/profile" && (
+              <motion.div
+                layoutId="nav-indicator"
+                className="absolute -bottom-2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"
+              />
             )}
-            data-testid="link-profile"
-          >
-            <div className="relative">
-              <User className={cn("w-6 h-6", location === "/profile" && "stroke-[2.5px]")} />
-              {location === "/profile" && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute -bottom-2 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2"
-                />
-              )}
-            </div>
-            <span className="text-[10px] font-medium mt-1">{t("profile")}</span>
-          </a>
+          </div>
+          <span className="text-[10px] font-medium mt-1">{t("profile")}</span>
         </Link>
       </nav>
     </div>
