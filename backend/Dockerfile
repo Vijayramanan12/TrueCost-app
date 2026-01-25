@@ -11,8 +11,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy new requirements file and install
-RUN pip install -r reqs.txt
+# Copy requirements file and install
+COPY backend/reqs.txt ./requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the backend files
 COPY backend/ .
