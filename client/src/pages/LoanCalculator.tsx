@@ -289,6 +289,7 @@ export default function LoanCalculator() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
               <Button onClick={handleCalculate} disabled={calculating}
                 className="w-full h-12 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg shadow-md">
                 {calculating ? t("calculating") : t("calculateLoan")}<TrendingUp className="ml-2 w-5 h-5" />
@@ -321,6 +322,7 @@ export default function LoanCalculator() {
                   <Input type="number" value={extraPaymentMonth ?? ""} onChange={(e) => setExtraPaymentMonth(e.target.value ? Number(e.target.value) : null)}
                     className="h-12" placeholder="0" />
                 </div>
+              </div>
               <div className="bg-muted/30 p-4 rounded-2xl flex items-start gap-3">
                 <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">{t("advancedOptionsDesc")}</p>
@@ -387,6 +389,7 @@ export default function LoanCalculator() {
                       </ul>
                     </div>
                   )}
+                  </div>
                 </motion.div>
               )}
             </CardContent>
@@ -415,42 +418,45 @@ export default function LoanCalculator() {
                       <p className="text-[10px] opacity-70 uppercase">{t("totalCost")}</p>
                       <p className="font-bold text-sm">{currencySymbol}{loanResults.summary.total_cost.toLocaleString('en-IN')}</p>
                     </div>
+                  </div>
                 </CardContent>
               </Card>
-              <Button onClick={handleGetRecommendations} disabled={loadingRecommendations}
-                className="w-full h-12 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold">
-                {loadingRecommendations ? t("generating") : t("getAiRecommendations")}<Sparkles className="ml-2 w-5 h-5" />
-              </Button>
-              {recommendations && (
-                <Card className="border-none shadow-lg">
-                  <CardContent className="p-6 space-y-4">
-                    <h3 className="font-bold text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-purple-500" />{t("aiRecommendations")}
-                    </h3>
-                    <div className="bg-muted/30 p-4 rounded-xl">
-                      <p className="text-sm font-semibold mb-2">{t("overallAssessment")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Affordability: <span className="font-bold capitalize">{recommendations.overall_assessment?.affordability_rating}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Recommendation: <span className="font-bold capitalize">{recommendations.overall_assessment?.recommendation}</span>
-                      </p>
-                    </div>
-                    {recommendations.quick_wins && recommendations.quick_wins.length > 0 && (
-                      <div className="bg-green-50 dark:bg-green-950 p-4 rounded-xl">
-                        <p className="text-sm font-semibold mb-2">{t("quickWins")}:</p>
-                        <ul className="text-xs space-y-1">
-                          {recommendations.quick_wins.map((win: string, i: number) => (
-                            <li key={i} className="flex items-start gap-2">
-                              <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-green-600" />{win}
-                            </li>
-                          ))}
-                        </ul>
+              <div>
+                <Button onClick={handleGetRecommendations} disabled={loadingRecommendations}
+                  className="w-full h-12 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold">
+                  {loadingRecommendations ? t("generating") : t("getAiRecommendations")}<Sparkles className="ml-2 w-5 h-5" />
+                </Button>
+                {recommendations && (
+                  <Card className="border-none shadow-lg">
+                    <CardContent className="p-6 space-y-4">
+                      <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-500" />{t("aiRecommendations")}
+                      </h3>
+                      <div className="bg-muted/30 p-4 rounded-xl">
+                        <p className="text-sm font-semibold mb-2">{t("overallAssessment")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Affordability: <span className="font-bold capitalize">{recommendations.overall_assessment?.affordability_rating}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Recommendation: <span className="font-bold capitalize">{recommendations.overall_assessment?.recommendation}</span>
+                        </p>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                      {recommendations.quick_wins && recommendations.quick_wins.length > 0 && (
+                        <div className="bg-green-50 dark:bg-green-950 p-4 rounded-xl">
+                          <p className="text-sm font-semibold mb-2">{t("quickWins")}:</p>
+                          <ul className="text-xs space-y-1">
+                            {recommendations.quick_wins.map((win: string, i: number) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-green-600" />{win}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </>
           ) : (
             <Card className="border-none shadow-lg">
