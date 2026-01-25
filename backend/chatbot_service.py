@@ -5,6 +5,7 @@ Uses Groq LLM with ReAct agent pattern for financial advice and analysis
 
 import os
 import logging
+import time
 from typing import List, Dict, Any
 
 # Set up logging
@@ -62,12 +63,13 @@ class TrueCostChatbot:
         
         logger.info("🔑 GROQ_API_KEY detected.")
         
-        # Initialize Groq LLM
+        # Initialize Groq LLM with faster, rate-limit-friendly model
+        # llama-3.1-8b-instant has much higher rate limits than 70b models
         self.llm = ChatGroq(
             api_key=api_key,
-            model_name="llama-3.3-70b-versatile",
-            temperature=0.7,
-            max_tokens=2000
+            model_name="llama-3.1-8b-instant",
+            temperature=0.3,  # Lower temperature for faster, more focused responses
+            max_tokens=1024   # Smaller response for speed
         )
         
         # Create tools for the agent
@@ -75,6 +77,10 @@ class TrueCostChatbot:
         
         # Create agent prompt
         self.agent_prompt = self._create_agent_prompt()
+        
+        # Rate limiting tracking
+        self.last_request_time = 0
+        self.min_request_interval = 1.0  # Minimum 1 second between requests
         
     def _create_tools(self) -> List[Tool]:
         """Create custom tools for financial analysis"""
@@ -107,7 +113,7 @@ OPERATIONAL RULES
 • If the user asks a non-financial question (e.g., "What is ML?", "Write a poem", "Coding help"), politely decline.
   - Example Rejection: "I specialize exclusively in financial planning, loans, and rental analysis for the Indian market. How can I assist you with your finances today?"
 • For loan calculations → Always call CalculateEMI.
-• If a User ID is provided (e.g., [User ID: 123]) and user asks about “my loans” → Call GetUserLoans with that ID.
+• If a User ID is provided (e.g., [User ID: 123]) and user asks about "my loans" → Call GetUserLoans with that ID.
 • If user mentions a specific bank (SBI, HDFC, ICICI, etc.) → Call AnalyzeBankTerms.
 • If user provides a rental property listing text → Call AnalyzeRentalListing.
 • Use Indian Rupees (₹) and Indian numbering conventions (lakhs, crores).
@@ -144,8 +150,8 @@ Thought: {agent_scratchpad}"""
             return AgentExecutor(
                 agent=agent,
                 tools=self.tools,
-                verbose=True,
-                max_iterations=5,
+                verbose=False,  # Disable verbose to reduce latency
+                max_iterations=3,  # Reduce iterations for faster responses
                 handle_parsing_errors=True
             )
         except Exception as e:
@@ -165,10 +171,17 @@ Thought: {agent_scratchpad}"""
             AI response string
         """
         try:
+            # Rate limiting - wait if needed
+            current_time = time.time()
+            time_since_last = current_time - self.last_request_time
+            if time_since_last < self.min_request_interval:
+                time.sleep(self.min_request_interval - time_since_last)
+            self.last_request_time = time.time()
+            
             # Prepare chat history for the prompt
             context = ""
             if conversation_history:
-                recent_history = conversation_history[-6:]  # Last 3 rounds
+                recent_history = conversation_history[-4:]  # Last 2 rounds
                 for msg in recent_history:
                     role = "User" if msg['role'] == 'user' else "AI"
                     context += f"{role}: {msg['content']}\n"
@@ -184,22 +197,22 @@ Thought: {agent_scratchpad}"""
             user_context = f"[User ID: {user_id}] " if user_id else ""
             agent_input = f"{user_context}{message}"
             
-            # Run the agent
+            # Run the agent with timeout
             try:
                 response = agent_executor.invoke({
                     "input": agent_input,
                     "chat_history": context
                 })
                 output = response.get('output', '')
-                if "Agent stopped due to iteration limit" in output:
+                if "Agent stopped due to iteration limit" in output or not output:
                     return "I'm sorry, I'm having trouble processing that request right now. Could you please rephrase or be more specific?"
                 return output
             except Exception as e:
                 error_msg = str(e)
                 if "429" in error_msg or "rate limit" in error_msg.lower():
-                     return "I'm currently receiving high traffic. Please wait a moment before trying again."
-                if "Agent stopped due to iteration limit" in error_msg or "time limit" in error_msg:
-                     return "I apologize, but I'm having a bit of trouble with that complex request. Could you try asking in a simpler way?"
+                    return "I'm currently receiving high traffic. Please wait a moment before trying again."
+                if "iteration limit" in error_msg or "time limit" in error_msg:
+                    return "I apologize, but I'm having a bit of trouble with that complex request. Could you try asking in a simpler way?"
                 raise e
             
         except Exception as e:
@@ -207,6 +220,8 @@ Thought: {agent_scratchpad}"""
             error_msg = str(e)
             if "DAILY_LIMIT_REACHED" in error_msg:
                 return "DAILY_LIMIT_REACHED"
+            if "429" in error_msg or "rate limit" in error_msg.lower():
+                return "I'm currently receiving high traffic. Please wait a moment before trying again."
             return f"I apologize, but I encountered an error. Please try again."
 
 # Singleton instance
