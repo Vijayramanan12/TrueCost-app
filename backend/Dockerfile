@@ -2,19 +2,22 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Force a cold rebuild with a new timestamp
-ENV REBUILD_TIMESTAMP=2026-01-24T20:30:00
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file and install
+# Upgrade pip and clear pip cache
+RUN pip install --upgrade pip && \
+    pip cache purge
+
+# Copy requirements first for better caching
 COPY backend/reqs.txt ./requirements.txt
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Python dependencies
+RUN pip install -r requirements.txt
 
 # Copy the rest of the backend files
 COPY backend/ .
