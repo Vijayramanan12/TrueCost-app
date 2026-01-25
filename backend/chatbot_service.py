@@ -68,7 +68,7 @@ class TrueCostChatbot:
         self.llm = ChatGroq(
             api_key=api_key,
             model_name="llama-3.1-8b-instant",
-            temperature=0.3,  # Lower temperature for faster, more focused responses
+            temperature=0.5,  # Lower temperature for faster, more focused responses
             max_tokens=1024   # Smaller response for speed
         )
         
