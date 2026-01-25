@@ -3,9 +3,8 @@
   publish = "dist"
 
 [[redirects]]
-  # This will be updated once your Railway backend is live
   from = "/api/*"
-  to = ":BACKEND_URL/api/:https://truecost-backend-czfm.onrender.com"
+  to = "https://truecost-backend-czfm.onrender.com/api/:splat"
   status = 200
   force = true
 
