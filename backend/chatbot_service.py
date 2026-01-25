@@ -150,8 +150,8 @@ Thought: {agent_scratchpad}"""
             return AgentExecutor(
                 agent=agent,
                 tools=self.tools,
-                verbose=False,  # Disable verbose to reduce latency
-                max_iterations=3,  # Reduce iterations for faster responses
+                verbose=True,  # Disable verbose to reduce latency
+                max_iterations=5,  # Reduce iterations for faster responses
                 handle_parsing_errors=True
             )
         except Exception as e:
