@@ -12,7 +12,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-// Popular Indian banks
 const INDIAN_BANKS = [
   "State Bank of India (SBI)",
   "HDFC Bank",
@@ -56,58 +55,54 @@ export default function LoanCalculator() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  // Tab state
   const [activeTab, setActiveTab] = useState("basic");
 
-  // Basic inputs
-  const [principal, setPrincipal] = useState(500000);
-  const [annualRate, setAnnualRate] = useState(10);
-  const [tenureMonths, setTenureMonths] = useState(24);
+  // Basic inputs - null means placeholder (shows 0 until user enters value)
+  const [principal, setPrincipal] = useState<number | null>(null);
+  const [annualRate, setAnnualRate] = useState<number | null>(null);
+  const [tenureMonths, setTenureMonths] = useState<number | null>(null);
   const [paymentFrequency, setPaymentFrequency] = useState("monthly");
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [loanType, setLoanType] = useState("fixed");
   const [currency, setCurrency] = useState("INR");
 
-  // Advanced inputs
-  const [downPayment, setDownPayment] = useState(0);
-  const [processingFee, setProcessingFee] = useState(0);
-  const [extraPaymentAmount, setExtraPaymentAmount] = useState(0);
-  const [extraPaymentMonth, setExtraPaymentMonth] = useState(1);
+  // Advanced inputs - null means placeholder
+  const [downPayment, setDownPayment] = useState<number | null>(null);
+  const [processingFee, setProcessingFee] = useState<number | null>(null);
+  const [extraPaymentAmount, setExtraPaymentAmount] = useState<number | null>(null);
+  const [extraPaymentMonth, setExtraPaymentMonth] = useState<number | null>(null);
 
-  // Bank info
   const [bankName, setBankName] = useState("");
   const [selectedLoanType, setSelectedLoanType] = useState("home loan");
   const [bankAnalysis, setBankAnalysis] = useState<any>(null);
   const [analyzingBank, setAnalyzingBank] = useState(false);
 
-  // Results
   const [loanResults, setLoanResults] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any>(null);
   const [calculating, setCalculating] = useState(false);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
-  // Ad state
   const [showAd, setShowAd] = useState(false);
   const [adTimer, setAdTimer] = useState(5);
 
   const currencySymbol = CURRENCIES.find(c => c.value === currency)?.symbol || "₹";
 
+  const getValue = (val: number | null, defaultVal: number) => val ?? defaultVal;
+
   const handleCalculate = async () => {
     setCalculating(true);
     try {
       const params = {
-        principal,
-        annual_rate: annualRate,
-        tenure_months: tenureMonths,
+        principal: getValue(principal, 500000),
+        annual_rate: getValue(annualRate, 10),
+        tenure_months: getValue(tenureMonths, 24),
         payment_frequency: paymentFrequency,
         start_date: startDate,
         loan_type: loanType,
-        down_payment: downPayment,
-        fees: {
-          processing: processingFee
-        },
-        extra_payments: extraPaymentAmount > 0 ? [{
-          payment_number: extraPaymentMonth,
+        down_payment: getValue(downPayment, 0),
+        fees: { processing: getValue(processingFee, 0) },
+        extra_payments: (extraPaymentAmount ?? 0) > 0 ? [{
+          payment_number: (extraPaymentMonth ?? 1),
           amount: extraPaymentAmount
         }] : []
       };
@@ -116,17 +111,10 @@ export default function LoanCalculator() {
       const data = await res.json();
 
       setLoanResults(data);
-      toast({
-        title: "Calculation Complete",
-        description: "Loan details calculated successfully"
-      });
+      toast({ title: "Calculation Complete", description: "Loan details calculated successfully" });
       setActiveTab("results");
     } catch (error: any) {
-      toast({
-        title: "Calculation Failed",
-        description: error.message || "Failed to calculate loan",
-        variant: "destructive"
-      });
+      toast({ title: "Calculation Failed", description: error.message || "Failed to calculate loan", variant: "destructive" });
     } finally {
       setCalculating(false);
     }
@@ -134,11 +122,7 @@ export default function LoanCalculator() {
 
   const handleAnalyzeBank = async () => {
     if (!bankName) {
-      toast({
-        title: "Bank Required",
-        description: "Please select a bank to analyze",
-        variant: "destructive"
-      });
+      toast({ title: "Bank Required", description: "Please select a bank to analyze", variant: "destructive" });
       return;
     }
 
@@ -149,48 +133,32 @@ export default function LoanCalculator() {
         loan_type: selectedLoanType
       });
       const data = await res.json();
-
       setBankAnalysis(data);
-      setShowAd(true); // Show ad after analysis
-
+      setShowAd(true);
     } catch (error: any) {
-      toast({
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze bank",
-        variant: "destructive"
-      });
+      toast({ title: "Analysis Failed", description: error.message || "Failed to analyze bank", variant: "destructive" });
     } finally {
       setAnalyzingBank(false);
     }
   };
 
-  // Ad countdown effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (showAd && adTimer > 0) {
-      interval = setInterval(() => {
-        setAdTimer((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(() => { setAdTimer((prev) => prev - 1); }, 1000);
     }
     return () => clearInterval(interval);
   }, [showAd, adTimer]);
 
   const closeAd = () => {
     setShowAd(false);
-    setAdTimer(5); // Reset timer
-    toast({
-      title: "Bank Analysis Complete",
-      description: `Analyzed ${bankName} ${selectedLoanType} terms`
-    });
+    setAdTimer(5);
+    toast({ title: "Bank Analysis Complete", description: `Analyzed ${bankName} ${selectedLoanType} terms` });
   };
 
   const handleGetRecommendations = async () => {
     if (!loanResults) {
-      toast({
-        title: "Calculate First",
-        description: "Please calculate the loan first",
-        variant: "destructive"
-      });
+      toast({ title: "Calculate First", description: "Please calculate the loan first", variant: "destructive" });
       return;
     }
 
@@ -202,18 +170,10 @@ export default function LoanCalculator() {
         user_profile: null
       });
       const data = await res.json();
-
       setRecommendations(data);
-      toast({
-        title: "Recommendations Ready",
-        description: "AI-powered financial advice generated"
-      });
+      toast({ title: "Recommendations Ready", description: "AI-powered financial advice generated" });
     } catch (error: any) {
-      toast({
-        title: "Recommendations Failed",
-        description: error.message || "Failed to generate recommendations",
-        variant: "destructive"
-      });
+      toast({ title: "Recommendations Failed", description: error.message || "Failed to generate recommendations", variant: "destructive" });
     } finally {
       setLoadingRecommendations(false);
     }
@@ -235,30 +195,17 @@ export default function LoanCalculator() {
     a.href = url;
     a.download = `loan-schedule-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
-
-    toast({
-      title: "Export Complete",
-      description: "Amortization schedule downloaded"
-    });
+    toast({ title: "Export Complete", description: "Amortization schedule downloaded" });
   };
 
   return (
     <div className="pb-24 pt-8 px-6 max-w-4xl mx-auto min-h-screen bg-background relative">
-      {/* Ad Modal */}
       <AnimatePresence>
         {showAd && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-card w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
               <div className="p-1 bg-gradient-to-r from-amber-500 to-orange-600" />
               <div className="p-6 text-center space-y-6">
                 <div className="flex justify-between items-start">
@@ -267,21 +214,12 @@ export default function LoanCalculator() {
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
-
                 <div className="py-4">
                   <Sparkles className="w-12 h-12 text-amber-500 mx-auto mb-4" />
                   <h3 className="text-xl font-bold mb-2">Unlock Premium Insights?</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Get deeper bank analysis and competitor comparisons with TrueCost Premium.
-                  </p>
+                  <p className="text-muted-foreground text-sm">Get deeper bank analysis and competitor comparisons with TrueCost Premium.</p>
                 </div>
-
-                <Button
-                  className="w-full h-12 rounded-xl font-bold"
-                  variant={adTimer > 0 ? "secondary" : "default"}
-                  onClick={closeAd}
-                  disabled={adTimer > 0}
-                >
+                <Button className="w-full h-12 rounded-xl font-bold" variant={adTimer > 0 ? "secondary" : "default"} onClick={closeAd} disabled={adTimer > 0}>
                   {adTimer > 0 ? `Wait ${adTimer}s` : t("skipAd")}
                 </Button>
               </div>
@@ -306,217 +244,124 @@ export default function LoanCalculator() {
           <TabsTrigger value="schedule">{t("scheduleTab")}</TabsTrigger>
         </TabsList>
 
-        {/* BASIC TAB */}
         <TabsContent value="basic" className="space-y-6">
           <Card className="border-none shadow-lg">
             <CardContent className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
-                    <IndianRupee className="w-4 h-4" />
-                    {t("loanAmount")}
+                    <IndianRupee className="w-4 h-4" />{t("loanAmount")}
                   </Label>
-                  <Input
-                    type="number"
-                    value={principal}
-                    onChange={(e) => setPrincipal(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={principal ?? ""} onChange={(e) => setPrincipal(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("interestRate")}</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={annualRate}
-                    onChange={(e) => setAnnualRate(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" step="0.1" value={annualRate ?? ""} onChange={(e) => setAnnualRate(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("tenureMonths")}</Label>
-                  <Input
-                    type="number"
-                    value={tenureMonths}
-                    onChange={(e) => setTenureMonths(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={tenureMonths ?? ""} onChange={(e) => setTenureMonths(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("paymentFrequency")}</Label>
                   <Select value={paymentFrequency} onValueChange={setPaymentFrequency}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {PAYMENT_FREQUENCIES.map(freq => (
-                        <SelectItem key={freq.value} value={freq.value}>
-                          {freq.label}
-                        </SelectItem>
-                      ))}
+                      {PAYMENT_FREQUENCIES.map(freq => (<SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {t("startDate")}
+                    <Calendar className="w-4 h-4" />{t("startDate")}
                   </Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-12"
-                  />
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("currency")}</Label>
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {CURRENCIES.map(curr => (
-                        <SelectItem key={curr.value} value={curr.value}>
-                          {curr.symbol} {curr.value}
-                        </SelectItem>
-                      ))}
+                      {CURRENCIES.map(curr => (<SelectItem key={curr.value} value={curr.value}>{curr.symbol} {curr.value}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <Button
-                onClick={handleCalculate}
-                disabled={calculating}
-                className="w-full h-12 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg shadow-md"
-              >
-                {calculating ? t("calculating") : t("calculateLoan")}
-                <TrendingUp className="ml-2 w-5 h-5" />
+              <Button onClick={handleCalculate} disabled={calculating}
+                className="w-full h-12 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-lg shadow-md">
+                {calculating ? t("calculating") : t("calculateLoan")}<TrendingUp className="ml-2 w-5 h-5" />
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ADVANCED TAB */}
         <TabsContent value="advanced" className="space-y-6">
           <Card className="border-none shadow-lg">
             <CardContent className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("downPayment")}</Label>
-                  <Input
-                    type="number"
-                    value={downPayment}
-                    onChange={(e) => setDownPayment(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={downPayment ?? ""} onChange={(e) => setDownPayment(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("processingFee")}</Label>
-                  <Input
-                    type="number"
-                    value={processingFee}
-                    onChange={(e) => setProcessingFee(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={processingFee ?? ""} onChange={(e) => setProcessingFee(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("extraPaymentAmount")}</Label>
-                  <Input
-                    type="number"
-                    value={extraPaymentAmount}
-                    onChange={(e) => setExtraPaymentAmount(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={extraPaymentAmount ?? ""} onChange={(e) => setExtraPaymentAmount(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("extraPaymentMonth")}</Label>
-                  <Input
-                    type="number"
-                    value={extraPaymentMonth}
-                    onChange={(e) => setExtraPaymentMonth(Number(e.target.value))}
-                    className="h-12"
-                  />
+                  <Input type="number" value={extraPaymentMonth ?? ""} onChange={(e) => setExtraPaymentMonth(e.target.value ? Number(e.target.value) : null)}
+                    className="h-12" placeholder="0" />
                 </div>
-              </div>
-
               <div className="bg-muted/30 p-4 rounded-2xl flex items-start gap-3">
                 <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t("advancedOptionsDesc")}
-                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{t("advancedOptionsDesc")}</p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* BANK INFO TAB */}
         <TabsContent value="bank" className="space-y-6">
           <Card className="border-none shadow-lg">
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold flex items-center gap-2">
-                    <Building2 className="w-4 h-4" />
-                    {t("selectBank")}
+                    <Building2 className="w-4 h-4" />{t("selectBank")}
                   </Label>
                   <Select value={bankName} onValueChange={setBankName}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Choose a bank..." />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-12"><SelectValue placeholder="Choose a bank..." /></SelectTrigger>
                     <SelectContent>
-                      {INDIAN_BANKS.map(bank => (
-                        <SelectItem key={bank} value={bank}>
-                          {bank}
-                        </SelectItem>
-                      ))}
+                      {INDIAN_BANKS.map(bank => (<SelectItem key={bank} value={bank}>{bank}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold">{t("loanProductType")}</Label>
                   <Select value={selectedLoanType} onValueChange={setSelectedLoanType}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {LOAN_TYPES.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
+                      {LOAN_TYPES.map(type => (<SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
-
-                <Button
-                  onClick={handleAnalyzeBank}
-                  disabled={analyzingBank || !bankName}
-                  className="w-full h-12 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-bold"
-                >
-                  {analyzingBank ? t("analyzing") : t("analyzeBankTerms")}
-                  <Sparkles className="ml-2 w-5 h-5" />
+                <Button onClick={handleAnalyzeBank} disabled={analyzingBank || !bankName}
+                  className="w-full h-12 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-bold">
+                  {analyzingBank ? t("analyzing") : t("analyzeBankTerms")}<Sparkles className="ml-2 w-5 h-5" />
                 </Button>
               </div>
 
               {bankAnalysis && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4 mt-6"
-                >
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
                   <h3 className="font-bold text-lg">{t("bankAnalysisResults")}</h3>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-green-50 dark:bg-green-950 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground mb-1">{t("interestRateRange")}</p>
@@ -524,23 +369,19 @@ export default function LoanCalculator() {
                         {bankAnalysis.interest_rate_range?.min}% - {bankAnalysis.interest_rate_range?.max}%
                       </p>
                     </div>
-
                     <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground mb-1">{t("processingFee")}</p>
                       <p className="text-lg font-bold text-blue-700 dark:text-blue-400">
                         {bankAnalysis.processing_fee?.percentage}%
                       </p>
                     </div>
-                  </div>
-
                   {bankAnalysis.favorable_terms && bankAnalysis.favorable_terms.length > 0 && (
                     <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-xl">
                       <p className="text-sm font-semibold mb-2">{t("favorableTerms")}:</p>
                       <ul className="text-xs space-y-1">
                         {bankAnalysis.favorable_terms.map((term: string, i: number) => (
                           <li key={i} className="flex items-start gap-2">
-                            <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
-                            {term}
+                            <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />{term}
                           </li>
                         ))}
                       </ul>
@@ -552,58 +393,40 @@ export default function LoanCalculator() {
           </Card>
         </TabsContent>
 
-        {/* RESULTS TAB */}
         <TabsContent value="results" className="space-y-6">
           {loanResults ? (
             <>
               <Card className="border-none shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
                 <CardContent className="p-6 text-center">
-                  <p className="text-white/80 text-xs font-medium uppercase tracking-wider mb-1">
-                    {t("regularPayment")}
-                  </p>
+                  <p className="text-white/80 text-xs font-medium uppercase tracking-wider mb-1">{t("regularPayment")}</p>
                   <div className="text-4xl font-heading font-bold mb-4">
                     {currencySymbol}{loanResults.summary.regular_payment.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                   </div>
                   <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
                     <div>
                       <p className="text-[10px] opacity-70 uppercase">{t("totalPrincipal")}</p>
-                      <p className="font-bold text-sm">
-                        {currencySymbol}{loanResults.summary.total_principal.toLocaleString('en-IN')}
-                      </p>
+                      <p className="font-bold text-sm">{currencySymbol}{loanResults.summary.total_principal.toLocaleString('en-IN')}</p>
                     </div>
                     <div>
                       <p className="text-[10px] opacity-70 uppercase">{t("totalInterest")}</p>
-                      <p className="font-bold text-sm">
-                        {currencySymbol}{loanResults.summary.total_interest.toLocaleString('en-IN')}
-                      </p>
+                      <p className="font-bold text-sm">{currencySymbol}{loanResults.summary.total_interest.toLocaleString('en-IN')}</p>
                     </div>
                     <div>
                       <p className="text-[10px] opacity-70 uppercase">{t("totalCost")}</p>
-                      <p className="font-bold text-sm">
-                        {currencySymbol}{loanResults.summary.total_cost.toLocaleString('en-IN')}
-                      </p>
+                      <p className="font-bold text-sm">{currencySymbol}{loanResults.summary.total_cost.toLocaleString('en-IN')}</p>
                     </div>
-                  </div>
                 </CardContent>
               </Card>
-
-              <Button
-                onClick={handleGetRecommendations}
-                disabled={loadingRecommendations}
-                className="w-full h-12 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold"
-              >
-                {loadingRecommendations ? t("generating") : t("getAiRecommendations")}
-                <Sparkles className="ml-2 w-5 h-5" />
+              <Button onClick={handleGetRecommendations} disabled={loadingRecommendations}
+                className="w-full h-12 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-bold">
+                {loadingRecommendations ? t("generating") : t("getAiRecommendations")}<Sparkles className="ml-2 w-5 h-5" />
               </Button>
-
               {recommendations && (
                 <Card className="border-none shadow-lg">
                   <CardContent className="p-6 space-y-4">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-purple-500" />
-                      {t("aiRecommendations")}
+                      <Sparkles className="w-5 h-5 text-purple-500" />{t("aiRecommendations")}
                     </h3>
-
                     <div className="bg-muted/30 p-4 rounded-xl">
                       <p className="text-sm font-semibold mb-2">{t("overallAssessment")}</p>
                       <p className="text-xs text-muted-foreground">
@@ -613,15 +436,13 @@ export default function LoanCalculator() {
                         Recommendation: <span className="font-bold capitalize">{recommendations.overall_assessment?.recommendation}</span>
                       </p>
                     </div>
-
                     {recommendations.quick_wins && recommendations.quick_wins.length > 0 && (
                       <div className="bg-green-50 dark:bg-green-950 p-4 rounded-xl">
                         <p className="text-sm font-semibold mb-2">{t("quickWins")}:</p>
                         <ul className="text-xs space-y-1">
                           {recommendations.quick_wins.map((win: string, i: number) => (
                             <li key={i} className="flex items-start gap-2">
-                              <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-green-600" />
-                              {win}
+                              <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 text-green-600" />{win}
                             </li>
                           ))}
                         </ul>
@@ -641,22 +462,15 @@ export default function LoanCalculator() {
           )}
         </TabsContent>
 
-        {/* SCHEDULE TAB */}
         <TabsContent value="schedule" className="space-y-6">
           {loanResults?.schedule ? (
             <>
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-lg">{t("amortizationSchedule")}</h3>
-                <Button
-                  onClick={exportSchedule}
-                  variant="outline"
-                  className="rounded-xl"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {t("exportCsv")}
+                <Button onClick={exportSchedule} variant="outline" className="rounded-xl">
+                  <Download className="w-4 h-4 mr-2" />{t("exportCsv")}
                 </Button>
               </div>
-
               <Card className="border-none shadow-lg">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">

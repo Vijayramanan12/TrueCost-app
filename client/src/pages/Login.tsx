@@ -103,7 +103,7 @@ export default function Login() {
                                         <Input
                                             value={username}
                                             onChange={(e) => setUsername(e.target.value)}
-                                            placeholder="demo_user"
+                                            placeholder="user name"
                                             className="rounded-xl h-12 bg-muted/30 border-none focus-visible:ring-1"
                                             required
                                         />
