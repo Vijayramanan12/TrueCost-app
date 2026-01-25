@@ -22,16 +22,19 @@ export default function Calculator() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
 
-  // Manual entry states
-  const [manualRent, setManualRent] = useState(45000);
-  const [manualParking, setManualParking] = useState(2000);
-  const [manualPetRent, setManualPetRent] = useState(500);
-  const [manualWater, setManualWater] = useState(400);
-  const [manualElectricity, setManualElectricity] = useState(3500);
-  const [manualInternet, setManualInternet] = useState(800);
-  const [manualTrash, setManualTrash] = useState(200);
-  const [manualDepositMultiplier, setManualDepositMultiplier] = useState(2);
-  const [manualAdminFee, setManualAdminFee] = useState(2500);
+  // Manual entry states - null means not set yet (placeholder mode)
+  const [manualRent, setManualRent] = useState<number | null>(null);
+  const [manualParking, setManualParking] = useState<number | null>(null);
+  const [manualPetRent, setManualPetRent] = useState<number | null>(null);
+  const [manualWater, setManualWater] = useState<number | null>(null);
+  const [manualElectricity, setManualElectricity] = useState<number | null>(null);
+  const [manualInternet, setManualInternet] = useState<number | null>(null);
+  const [manualTrash, setManualTrash] = useState<number | null>(null);
+  const [manualDepositMultiplier, setManualDepositMultiplier] = useState<number | null>(null);
+  const [manualAdminFee, setManualAdminFee] = useState<number | null>(null);
+
+  // Helper to get value or default
+  const getValue = (val: number | null, defaultVal: number) => val ?? defaultVal;
 
   const [showAd, setShowAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
@@ -89,13 +92,13 @@ export default function Calculator() {
     setResult(null);
     setError(null);
 
-    // Construct payload
+    // Construct payload - use default values only for calculation
     const payload = {
       listingText: listingText,
-      manualRent: manualRent,
+      manualRent: getValue(manualRent, 45000),
       oneTime: {
-        deposit: manualRent * manualDepositMultiplier,
-        adminFee: manualAdminFee,
+        deposit: getValue(manualRent, 45000) * getValue(manualDepositMultiplier, 2),
+        adminFee: getValue(manualAdminFee, 2500),
       }
     };
 
@@ -222,15 +225,15 @@ export default function Calculator() {
         </TabsContent>
 
         <TabsContent value="manual" className="mt-4 space-y-6">
-          <div className="space-y-4 bg-muted/20 p-4 rounded-2xl border">
+            <div className="space-y-4 bg-muted/20 p-4 rounded-2xl border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label>{t("baseMonthlyRent")}</Label>
-                  <span className="font-bold text-primary">₹{manualRent.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-primary">₹{manualRent?.toLocaleString('en-IN') ?? '0'}</span>
                 </div>
                 <Slider
-                  value={[manualRent]}
+                  value={[manualRent ?? 0]}
                   onValueChange={([v]) => setManualRent(v)}
                   max={200000}
                   step={1000}
@@ -240,10 +243,10 @@ export default function Calculator() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label>{t("parkingFee")}</Label>
-                  <span className="font-bold text-primary">₹{manualParking.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-primary">₹{manualParking?.toLocaleString('en-IN') ?? '0'}</span>
                 </div>
                 <Slider
-                  value={[manualParking]}
+                  value={[manualParking ?? 0]}
                   onValueChange={([v]) => setManualParking(v)}
                   max={10000}
                   step={500}
@@ -253,10 +256,10 @@ export default function Calculator() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label>{t("petRent")}</Label>
-                  <span className="font-bold text-primary">₹{manualPetRent.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-primary">₹{manualPetRent?.toLocaleString('en-IN') ?? '0'}</span>
                 </div>
                 <Slider
-                  value={[manualPetRent]}
+                  value={[manualPetRent ?? 0]}
                   onValueChange={([v]) => setManualPetRent(v)}
                   max={5000}
                   step={100}
@@ -266,10 +269,10 @@ export default function Calculator() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label>{t("securityDepositMonths")}</Label>
-                  <span className="font-bold text-primary">{manualDepositMultiplier}{t("rentMultiplier")}</span>
+                  <span className="font-bold text-primary">{manualDepositMultiplier ?? '0'}{t("rentMultiplier")}</span>
                 </div>
                 <Slider
-                  value={[manualDepositMultiplier]}
+                  value={[manualDepositMultiplier ?? 0]}
                   onValueChange={([v]) => setManualDepositMultiplier(v)}
                   max={10}
                   step={1}
@@ -283,37 +286,37 @@ export default function Calculator() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <Label>{t("electricity")}</Label>
-                    <span>₹{manualElectricity}</span>
+                    <span>₹{manualElectricity?.toLocaleString('en-IN') ?? '0'}</span>
                   </div>
-                  <Slider value={[manualElectricity]} onValueChange={([v]) => setManualElectricity(v)} max={10000} step={100} />
+                  <Slider value={[manualElectricity ?? 0]} onValueChange={([v]) => setManualElectricity(v)} max={10000} step={100} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <Label>{t("waterSewer")}</Label>
-                    <span>₹{manualWater}</span>
+                    <span>₹{manualWater?.toLocaleString('en-IN') ?? '0'}</span>
                   </div>
-                  <Slider value={[manualWater]} onValueChange={([v]) => setManualWater(v)} max={2000} step={50} />
+                  <Slider value={[manualWater ?? 0]} onValueChange={([v]) => setManualWater(v)} max={2000} step={50} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <Label>{t("internet")}</Label>
-                    <span>₹{manualInternet}</span>
+                    <span>₹{manualInternet?.toLocaleString('en-IN') ?? '0'}</span>
                   </div>
-                  <Slider value={[manualInternet]} onValueChange={([v]) => setManualInternet(v)} max={5000} step={100} />
+                  <Slider value={[manualInternet ?? 0]} onValueChange={([v]) => setManualInternet(v)} max={5000} step={100} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <Label>{t("trashMaintenance")}</Label>
-                    <span>₹{manualTrash}</span>
+                    <span>₹{manualTrash?.toLocaleString('en-IN') ?? '0'}</span>
                   </div>
-                  <Slider value={[manualTrash]} onValueChange={([v]) => setManualTrash(v)} max={2000} step={50} />
+                  <Slider value={[manualTrash ?? 0]} onValueChange={([v]) => setManualTrash(v)} max={2000} step={50} />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <Label>{t("adminFees")}</Label>
-                    <span>₹{manualAdminFee}</span>
+                    <span>₹{manualAdminFee?.toLocaleString('en-IN') ?? '0'}</span>
                   </div>
-                  <Slider value={[manualAdminFee]} onValueChange={([v]) => setManualAdminFee(v)} max={10000} step={500} />
+                  <Slider value={[manualAdminFee ?? 0]} onValueChange={([v]) => setManualAdminFee(v)} max={10000} step={500} />
                 </div>
               </div>
             </div>
