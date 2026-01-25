@@ -185,6 +185,12 @@ def register():
         if not username or not password:
             return jsonify({"message": "Username and password required"}), 400
 
+        # Check if username already exists
+        existing_user = storage.get_user_by_username(username)
+        if existing_user:
+            print(f"Username '{username}' already exists - rejecting registration")
+            return jsonify({"message": "Username already taken"}), 400
+
         if email:
             # 1. DNS Check (Syntax + Domain)
             try:
